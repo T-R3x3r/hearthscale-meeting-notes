@@ -1,0 +1,28 @@
+{
+  "$schema": "https://hearthscale.com/app.schema.json",
+  "id": "meeting-notes",
+  "name": "Meeting notes",
+  "version": "1.0.0",
+  "api": 6,
+  "icon": {
+    "light": "assets/icon-light.svg",
+    "dark": "assets/icon-dark.svg"
+  },
+  "description": "Record a meeting from your microphone, and keep its transcript beside your own notes. The transcription runs on this computer's transcription model.",
+  "license": "MIT",
+  "categories": ["notes", "productivity"],
+  "payment": "free",
+  "environment": { "kind": "process" },
+  "permissions": ["microphone"],
+  "uses": ["store", "jobs"],
+  "models": { "transcription": { "required": false } },
+  "surfaces": [
+    {
+      "id": "meetings",
+      "kind": "view",
+      "title": "Meeting notes",
+      "entry": "views/meeting-notes.js",
+      "placements": ["rail", "tab"]
+    }
+  ]
+}
