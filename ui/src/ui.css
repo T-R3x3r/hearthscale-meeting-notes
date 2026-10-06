@@ -113,7 +113,7 @@ body,
 
 .notes-meter {
   flex: 1;
-  height: calc(var(--bw) * 6);
+  height: calc(var(--space) * 1.5);
   border-radius: var(--r-pill);
   background: var(--line);
   overflow: hidden;
@@ -124,7 +124,7 @@ body,
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
-  transition: width var(--dur-fast) var(--ease);
+  transition: width var(--dur) var(--ease-out);
 }
 
 .notes-section {
