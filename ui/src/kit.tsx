@@ -6,9 +6,23 @@
 import { useEffect, useState, type ReactNode } from 'react';
 
 /** A Remix Icon by its remixicon.com name, at a size in pixels, in the
- *  colour of the text around it. */
-export function Icon({ name, size }: { name: string; size: number }) {
-  return <i aria-hidden="true" className={`ri-${name} notes-icon`} style={{ fontSize: size }} />;
+ *  colour of the text around it, with any further classes given. */
+export function Icon({
+  name,
+  size,
+  className,
+}: {
+  name: string;
+  size: number;
+  className?: string;
+}) {
+  return (
+    <i
+      aria-hidden="true"
+      className={`ri-${name} notes-icon${className ? ` ${className}` : ''}`}
+      style={{ fontSize: size }}
+    />
+  );
 }
 
 /** A control that shows a mark alone, its name in a tooltip, which a

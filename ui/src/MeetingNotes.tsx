@@ -291,7 +291,7 @@ export function MeetingNotes({
                 <h2 className="notes-heading">Transcript</h2>
                 {handing || transcribing ? (
                   <span className="notes-working">
-                    <Icon name="loader-4-line" size={14} />
+                    <Icon name="loader-4-line" size={14} className="hs-spin" />
                     Transcribing
                   </span>
                 ) : null}

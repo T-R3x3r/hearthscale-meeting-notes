@@ -149,22 +149,6 @@ body,
   font-size: var(--fs-md);
 }
 
-.notes-working > .notes-icon {
-  animation: notes-turn 1s linear infinite;
-}
-
-@keyframes notes-turn {
-  to {
-    transform: rotate(1turn);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .notes-working > .notes-icon {
-    animation: none;
-  }
-}
-
 .notes-transcript {
   color: var(--text);
   font-size: var(--fs-docs);
