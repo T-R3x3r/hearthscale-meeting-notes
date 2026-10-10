@@ -4,7 +4,8 @@
  * its title, Record and Stop, the transcript, and the person's own notes.
  * A recording goes to the platform as WAV assets and is transcribed one
  * part after another; the job under way is kept, so a view that opens
- * again follows it. A narrow tab shows the list or the meeting.
+ * again follows it. With no meeting open, New meeting stands in its
+ * place. A narrow tab shows the list or the meeting.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Confirm, Icon, MarkPress, Notice } from './kit.tsx';
@@ -33,7 +34,7 @@ export function MeetingNotes({
 }: {
   platform: Platform;
   meetings: Meetings;
-  first: { list: MeetingEntry[]; meeting: Meeting };
+  first: { list: MeetingEntry[]; meeting: Meeting | null };
 }) {
   const [list, setList] = useState(first.list);
   const [meeting, setMeeting] = useState(first.meeting);
@@ -46,7 +47,7 @@ export function MeetingNotes({
   const [listShown, setListShown] = useState(false);
   const root = useRef<HTMLDivElement | null>(null);
   const recorder = useRef<Recorder | null>(null);
-  const openId = useRef(first.meeting.id);
+  const openId = useRef(first.meeting?.id ?? null);
   const typed = useRef<Meeting | null>(null);
   const keepTimer = useRef<number>(0);
 
@@ -97,7 +98,7 @@ export function MeetingNotes({
   // A meeting whose transcription ran when the view closed goes on.
   useEffect(() => {
     const m = first.meeting;
-    if (m.parts.length > m.texts.length && !m.error) void transcribe(m);
+    if (m && m.parts.length > m.texts.length && !m.error) void transcribe(m);
   }, [first.meeting, transcribe]);
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export function MeetingNotes({
 
   const stop = async () => {
     const held = recorder.current;
-    if (!held) return;
+    if (!held || !meeting) return;
     recorder.current = null;
     setRecording(null);
     setHanding(true);
@@ -151,6 +152,7 @@ export function MeetingNotes({
   };
 
   const type = (change: Partial<Pick<Meeting, 'title' | 'notes'>>) => {
+    if (!meeting) return;
     const next = { ...(typed.current ?? meeting), ...change };
     typed.current = next;
     setMeeting(next);
@@ -184,15 +186,20 @@ export function MeetingNotes({
     }
     const next = await meetings.remove(entry.id);
     setList(next);
-    if (meeting.id !== entry.id) return;
+    if (meeting?.id !== entry.id) return;
     if (next[0]) await show(next[0].id);
-    else await create();
+    else {
+      await stop();
+      openId.current = null;
+      setMeeting(null);
+      setProblem(null);
+    }
   };
 
   const sideShown = wide || listShown;
   const meetingShown = wide || !listShown;
-  const transcript = meeting.texts.join('\n\n');
-  const transcribing = meeting.parts.length > meeting.texts.length && !meeting.error;
+  const transcript = meeting?.texts.join('\n\n') ?? '';
+  const transcribing = !!meeting && meeting.parts.length > meeting.texts.length && !meeting.error;
 
   return (
     <div ref={root} className="hs-app-surface notes" data-wide={wide ? 'true' : 'false'}>
@@ -219,7 +226,7 @@ export function MeetingNotes({
               <div key={entry.id} className="hs-session-slot">
                 <div
                   className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${
-                    entry.id === meeting.id ? ' hs-boxsel' : ''
+                    entry.id === meeting?.id ? ' hs-boxsel' : ''
                   }`}
                   data-meeting={entry.id}
                   onClick={() => void show(entry.id)}
@@ -228,7 +235,7 @@ export function MeetingNotes({
                     <Icon name="file-list-3-line" size={15} />
                   </span>
                   <span className="hs-stitle hs-session-label">
-                    {entry.id === meeting.id ? meeting.title : entry.title}
+                    {entry.id === meeting?.id ? meeting.title : entry.title}
                   </span>
                   <span className="hs-rowact hs-session-actions">
                     <MarkPress
@@ -256,67 +263,76 @@ export function MeetingNotes({
               <Icon name="arrow-left-line" size={16} />
             </MarkPress>
           )}
-          <div className="notes-sheet" key={meeting.id}>
-            <input
-              className="notes-title"
-              aria-label="Title"
-              value={meeting.title}
-              onChange={(e) => type({ title: e.target.value })}
-            />
-            <div className="notes-recorder">
-              {recording ? (
-                <>
-                  <Button icon="stop-fill" variant="danger" onPress={() => void stop()}>
-                    Stop
-                  </Button>
-                  <span className="notes-clock">{clock(recording.seconds)}</span>
-                  <span className="notes-meter">
-                    <span style={{ width: `${Math.round(recording.level * 100)}%` }} />
-                  </span>
-                </>
-              ) : meeting.parts.length === 0 && !handing ? (
-                <Button icon="mic-fill" onPress={() => void record()}>
-                  Record
-                </Button>
-              ) : (
-                <span className="notes-clock">
-                  <Icon name="mic-line" size={14} />
-                  {clock(meeting.seconds)}
-                </span>
-              )}
+          {!meeting ? (
+            <div className="hs-empty-view">
+              <Icon name="mic-line" size={30} />
+              <Button icon="add-line" onPress={() => void create()}>
+                New meeting
+              </Button>
             </div>
-            {problem && <Notice>{problem}</Notice>}
-            {(meeting.parts.length > 0 || handing) && (
-              <section className="notes-section">
-                <h2 className="notes-heading">Transcript</h2>
-                {handing || transcribing ? (
-                  <span className="notes-working">
-                    <Icon name="loader-4-line" size={14} className="hs-spin" />
-                    Transcribing
-                  </span>
-                ) : null}
-                {transcript && <div className="notes-transcript">{transcript}</div>}
-                {meeting.error && (
-                  <>
-                    <Notice>{meeting.error}</Notice>
-                    <Button icon="refresh-line" onPress={() => void transcribe(meeting)}>
-                      Transcribe again
-                    </Button>
-                  </>
-                )}
-              </section>
-            )}
-            <section className="notes-section">
-              <h2 className="notes-heading">Notes</h2>
-              <textarea
-                className="hs-in notes-text"
-                aria-label="Notes"
-                placeholder="Write your notes"
-                value={meeting.notes}
-                onChange={(e) => type({ notes: e.target.value })}
+          ) : (
+            <div className="notes-sheet" key={meeting.id}>
+              <input
+                className="notes-title"
+                aria-label="Title"
+                value={meeting.title}
+                onChange={(e) => type({ title: e.target.value })}
               />
-            </section>
-          </div>
+              <div className="notes-recorder">
+                {recording ? (
+                  <>
+                    <Button icon="stop-fill" variant="danger" onPress={() => void stop()}>
+                      Stop
+                    </Button>
+                    <span className="notes-clock">{clock(recording.seconds)}</span>
+                    <span className="notes-meter">
+                      <span style={{ width: `${Math.round(recording.level * 100)}%` }} />
+                    </span>
+                  </>
+                ) : meeting.parts.length === 0 && !handing ? (
+                  <Button icon="mic-fill" onPress={() => void record()}>
+                    Record
+                  </Button>
+                ) : (
+                  <span className="notes-clock">
+                    <Icon name="mic-line" size={14} />
+                    {clock(meeting.seconds)}
+                  </span>
+                )}
+              </div>
+              {problem && <Notice>{problem}</Notice>}
+              {(meeting.parts.length > 0 || handing) && (
+                <section className="notes-section">
+                  <h2 className="notes-heading">Transcript</h2>
+                  {handing || transcribing ? (
+                    <span className="notes-working">
+                      <Icon name="loader-4-line" size={14} className="hs-spin" />
+                      Transcribing
+                    </span>
+                  ) : null}
+                  {transcript && <div className="notes-transcript">{transcript}</div>}
+                  {meeting.error && (
+                    <>
+                      <Notice>{meeting.error}</Notice>
+                      <Button icon="refresh-line" onPress={() => void transcribe(meeting)}>
+                        Transcribe again
+                      </Button>
+                    </>
+                  )}
+                </section>
+              )}
+              <section className="notes-section">
+                <h2 className="notes-heading">Notes</h2>
+                <textarea
+                  className="hs-in notes-text"
+                  aria-label="Notes"
+                  placeholder="Write your notes"
+                  value={meeting.notes}
+                  onChange={(e) => type({ notes: e.target.value })}
+                />
+              </section>
+            </div>
+          )}
         </main>
       )}
       {deleting && (

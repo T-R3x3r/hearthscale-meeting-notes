@@ -2,7 +2,7 @@
   "$schema": "https://hearthscale.com/app.schema.json",
   "id": "meeting-notes",
   "name": "Meeting notes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "api": 6,
   "icon": {
     "light": "assets/icon-light.svg",

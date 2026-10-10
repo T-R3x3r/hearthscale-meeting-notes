@@ -23,6 +23,11 @@ body,
   line-height: 1;
 }
 
+.hs-empty-view > .notes-icon {
+  color: var(--dim);
+  margin-bottom: var(--space);
+}
+
 .hs-shell :is(.hs-hovbox, .hs-hovbox-ink, .hs-hovink, .hs-button):active .notes-icon {
   transform: var(--press);
   opacity: var(--press-fade);
