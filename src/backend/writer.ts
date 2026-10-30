@@ -102,10 +102,11 @@ function properWords(texts: string[]): Set<string> {
   return proper;
 }
 
-/** A heading in sentence case: a word after the first that is capitalized
- *  only as a title capitalizes it goes to lower case. */
+/** A heading in sentence case: a word after the first, or a part of a
+ *  word after a dash, that is capitalized only as a title capitalizes it
+ *  goes to lower case. */
 function sentenceCase(heading: string, proper: Set<string>): string {
-  return heading.replace(/(?<=\S\s+)\p{Lu}[\p{Ll}\p{M}]+/gu, (word) => (proper.has(word) ? word : word.toLowerCase()));
+  return heading.replace(/(?<=\S[\s\p{Pd}]+)\p{Lu}[\p{Ll}\p{M}]+/gu, (word) => (proper.has(word) ? word : word.toLowerCase()));
 }
 
 /** The person's notes as separate lines, without list marks or heading
