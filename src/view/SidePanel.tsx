@@ -19,7 +19,10 @@ import { Transcript } from './Transcript.tsx';
 
 export type PanelMode = 'transcript' | 'ask';
 
-const SLOT = 'ask';
+/** The slots of Ask: the whole chat, and the composer alone before a
+ *  meeting's first message, which carries the meeting as a chip. */
+const CHAT = 'ask';
+const OPENING = 'ask-opening';
 
 /** The store's key of the Ask conversation of a meeting, or of the one
  *  about all meetings. */
@@ -128,12 +131,12 @@ export function SidePanel({
         if (changed.id === session) void check(changed.id);
       }),
       host.on<{ id: string; session: string | null }>('hearthscale/ui/slot-session', ({ id, session: now }) => {
-        if (id !== SLOT || !now || now === session) return;
+        if ((id !== CHAT && id !== OPENING) || !now || now === session) return;
         setSession(now);
         void host.call('hearthscale/store/set', { key, value: now });
       }),
       host.on<{ id: string; height: number }>('hearthscale/ui/slot-size', ({ id, height }) => {
-        if (id === SLOT) setComposer(height);
+        if (id === OPENING) setComposer(height);
       }),
     ];
     return () => offs.forEach((off) => off());
@@ -150,7 +153,7 @@ export function SidePanel({
       void host.call('hearthscale/ui/slots', {
         slots: [
           {
-            id: SLOT,
+            id: opening ? OPENING : CHAT,
             kind: opening ? 'composer' : 'chat',
             session,
             // The app's models are chosen on its settings page alone.
@@ -175,25 +178,19 @@ export function SidePanel({
     };
   }, [host, mode, session, opening]);
 
-  // The slot keeps its chip until the next update, so a conversation that
-  // has begun, or the one about all meetings, clears the chip another
-  // meeting left there.
   useEffect(() => {
-    if (mode !== 'ask' || !session) return;
+    if (mode !== 'ask' || !session || !opening || !meeting) return;
     void host.call('ui/update-model-context', {
-      content:
-        fresh && meeting
-          ? [
-              {
-                type: 'text',
-                text: `The meeting "${name}", id ${meeting.id}, of ${meeting.created.slice(0, 10)}.`,
-                _meta: { 'openai/title': name },
-              },
-            ]
-          : [],
-      _meta: { 'hearthscale/modelContext': { slot: SLOT } },
+      content: [
+        {
+          type: 'text',
+          text: `The meeting "${name}", id ${meeting.id}, of ${meeting.created.slice(0, 10)}.`,
+          _meta: { 'openai/title': name },
+        },
+      ],
+      _meta: { 'hearthscale/modelContext': { slot: OPENING } },
     });
-  }, [host, mode, session, fresh, meeting, name]);
+  }, [host, mode, session, opening, meeting, name]);
 
   const ask = async (text: string) => {
     await host.call('ui/message', { role: 'user', content: [{ type: 'text', text }] });
