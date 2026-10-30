@@ -15,6 +15,7 @@ import { MeetingPage, type Opened } from './MeetingPage.tsx';
 import { label } from './format.ts';
 import { forTranscription } from './sound.ts';
 import { SidePanel, type PanelMode } from './SidePanel.tsx';
+import { RecipesPage, TemplatesPage } from './Library.tsx';
 
 /** The narrowest tab that shows the list beside the meeting. */
 const WIDE = 720;
@@ -47,6 +48,7 @@ export function MeetingNotes({
   const [picked, setPicked] = useState<{ name: string; asset: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [panel, setPanel] = useState<PanelMode | null>(first.live ? 'transcript' : null);
+  const [section, setSection] = useState<'meetings' | 'templates' | 'recipes'>('meetings');
   const [focus, setFocus] = useState<number | null>(null);
   const [wide, setWide] = useState(true);
   const [listShown, setListShown] = useState(false);
@@ -60,6 +62,7 @@ export function MeetingNotes({
       try {
         const got = await host.tool<{ meeting: Meeting; mine: string; notes: string; lines: Line[] }>('meeting', { id });
         openId.current = id;
+        setSection('meetings');
         setOpen((before) => ({ ...got, version: (before?.version ?? 0) + 1 }));
         setPartial({ me: '', them: '' });
         setListShown(false);
@@ -241,7 +244,7 @@ export function MeetingNotes({
                 <div key={meeting.id} className="hs-session-slot">
                   <div
                     className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${
-                      meeting.id === open?.meeting.id ? ' hs-boxsel' : ''
+                      section === 'meetings' && meeting.id === open?.meeting.id ? ' hs-boxsel' : ''
                     }`}
                     onClick={() => void show(meeting.id)}
                   >
@@ -273,9 +276,35 @@ export function MeetingNotes({
               );
             })}
           </div>
+          <div className="notes-library">
+            {(
+              [
+                ['templates', 'Templates', 'layout-2-line'],
+                ['recipes', 'Recipes', 'quill-pen-line'],
+              ] as const
+            ).map(([key, name, icon]) => (
+              <div key={key} className="hs-session-slot">
+                <div
+                  className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${section === key ? ' hs-boxsel' : ''}`}
+                  onClick={() => {
+                    setSection(key);
+                    setListShown(false);
+                  }}
+                >
+                  <span className="hs-session-mark">
+                    <Icon name={icon} size={15} />
+                  </span>
+                  <span className="hs-stitle hs-session-label">{name}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+      {pageShown && section === 'templates' && <TemplatesPage host={host} />}
+      {pageShown && section === 'recipes' && <RecipesPage host={host} />}
       {pageShown &&
+        section === 'meetings' &&
         (open ? (
           <MeetingPage
             key={open.meeting.id}
@@ -350,7 +379,7 @@ export function MeetingNotes({
             </div>
           </main>
         ))}
-      {panel && (open || panel === 'ask') && (
+      {panel && section === 'meetings' && (open || panel === 'ask') && (
         <SidePanel
           host={host}
           mode={open ? panel : 'ask'}

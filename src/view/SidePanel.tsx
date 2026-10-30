@@ -1,9 +1,12 @@
 /**
  * The panel at the right of the view: the open meeting's transcript, or
  * Ask, where Hearthscale draws the chat of the app's assistant in a slot
- * the panel reserves. Ask keeps one conversation for each meeting, and one
- * about all meetings on the start page; a new conversation about a meeting
- * starts with the meeting as a chip only that chat shows.
+ * the panel reserves. Ask keeps one conversation for each meeting, named
+ * after it, and one about all meetings on the start page; the panel makes
+ * the conversation when Ask first opens there, and a meeting's starts
+ * with the meeting as a chip only that chat shows. The first chat slot of
+ * a rail tab shows the conversation the tab holds, so the panel opens the
+ * conversation in the tab as well.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icon, IconButton, SegmentedControl, useFloatingTips, Button } from '@hearthscale/app-ui';
@@ -52,25 +55,60 @@ export function SidePanel({
   onName: (speaker: string, name: string) => void;
 }) {
   const place = useRef<HTMLDivElement | null>(null);
-  const [session, setSession] = useState<string | null | undefined>(undefined);
+  const [session, setSession] = useState<string | undefined>(undefined);
+  const [fresh, setFresh] = useState(false);
+  const [round, setRound] = useState(0);
   const key = `ask:${meeting?.id ?? 'all'}`;
   const tips = useFloatingTips();
   const closeTip = tips('close-panel', 'Close');
 
-  useEffect(() => {
-    setSession(undefined);
-    void host.request<{ value: string | null }>('hearthscale/store/get', { key }).then(({ value }) => setSession(value));
-  }, [host, key]);
+  /** Whether the person has sent nothing in the conversation yet. */
+  const check = async (id: string) => {
+    const { entries } = await host.request<{ entries: { type: string }[] }>('hearthscale/sessions/entries', { id });
+    setFresh(!entries.some((e) => e.type === 'user.message'));
+  };
 
-  useEffect(
-    () =>
+  useEffect(() => {
+    if (mode !== 'ask') return;
+    let gone = false;
+    setSession(undefined);
+    void (async () => {
+      const { value } = await host.request<{ value: string | null }>('hearthscale/store/get', { key });
+      let id = value;
+      if (!id) {
+        const { session: made } = await host.request<{ session: { id: string } }>('hearthscale/sessions/create', {
+          title: meeting ? name : 'All meetings',
+        });
+        await host.request('hearthscale/store/set', { key, value: made.id });
+        id = made.id;
+      }
+      await check(id);
+      if (gone) return;
+      await host.request('hearthscale/surfaces/open', { session: id });
+      setSession(id);
+    })();
+    return () => {
+      gone = true;
+    };
+  }, [host, key, mode, meeting, name, round]);
+
+  useEffect(() => {
+    const offs = [
+      host.on<{ id: string }>('hearthscale/sessions/deleted', ({ id }) => {
+        if (id !== session) return;
+        void host.request('hearthscale/store/delete', { key }).then(() => setRound((r) => r + 1));
+      }),
+      host.on<{ session: { id: string } }>('hearthscale/sessions/changed', ({ session: changed }) => {
+        if (changed.id === session) void check(changed.id);
+      }),
       host.on<{ id: string; session: string | null }>('hearthscale/ui/slot-session', ({ id, session: now }) => {
-        if (id !== SLOT || !now) return;
+        if (id !== SLOT || !now || now === session) return;
         setSession(now);
         void host.request('hearthscale/store/set', { key, value: now });
       }),
-    [host, key],
-  );
+    ];
+    return () => offs.forEach((off) => off());
+  }, [host, key, session]);
 
   useLayoutEffect(() => {
     const el = place.current;
@@ -107,7 +145,7 @@ export function SidePanel({
   }, [host, mode, session]);
 
   useEffect(() => {
-    if (mode !== 'ask' || session !== null || !meeting) return;
+    if (mode !== 'ask' || !session || !fresh || !meeting) return;
     void host.request('ui/update-model-context', {
       content: [
         {
@@ -118,7 +156,7 @@ export function SidePanel({
       ],
       _meta: { 'hearthscale/modelContext': { slot: SLOT } },
     });
-  }, [host, mode, session, meeting, name]);
+  }, [host, mode, session, fresh, meeting, name]);
 
   const ask = (text: string) =>
     void host.request('ui/message', { role: 'user', content: [{ type: 'text', text }] });
@@ -159,7 +197,7 @@ export function SidePanel({
         />
       ) : (
         <>
-          {session === null && meeting && (
+          {fresh && meeting && (
             <div className="notes-starters">
               {STARTERS.map((s) => (
                 <Button key={s.label} size="sm" onClick={() => ask(s.text)}>

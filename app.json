@@ -31,7 +31,8 @@
     "jobs",
     "capture.microphone",
     "capture.system-sound",
-    "notifications"
+    "notifications",
+    "surfaces.open"
   ],
   "models": {
     "chat": {
@@ -542,6 +543,168 @@
       "input": {
         "type": "object",
         "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "templates",
+      "title": "Templates",
+      "description": "The person's own templates.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "save_template",
+      "title": "Save template",
+      "description": "Keeps a template of the person's own: its name, what kind of meeting it suits, and its sections.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "about": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "heading": {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                "guide": {
+                  "type": "string",
+                  "maxLength": 300
+                }
+              },
+              "required": [
+                "heading",
+                "guide"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 12
+          }
+        },
+        "required": [
+          "name",
+          "about",
+          "sections"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "delete_template",
+      "title": "Delete template",
+      "description": "Deletes a template of the person's own.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "recipes",
+      "title": "Recipes",
+      "description": "The person's own recipes.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "save_recipe",
+      "title": "Save recipe",
+      "description": "Keeps a recipe of the person's own, which the assistant's / menu then lists.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          }
+        },
+        "required": [
+          "title",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "delete_recipe",
+      "title": "Delete recipe",
+      "description": "Deletes a recipe of the person's own.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
         "additionalProperties": false
       },
       "mutating": true,

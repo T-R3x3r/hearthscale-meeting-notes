@@ -199,7 +199,7 @@ async function write(id: string, templateId: string): Promise<Meeting> {
   const control = new AbortController();
   writing.set(id, control);
   const meeting = await files.meeting(id);
-  const shape = template(templateId);
+  const shape = template(templateId) ?? (await files.templates()).find((t) => t.id === templateId);
   if (!shape) throw new Error(`There is no template ${templateId}.`);
   const lines = await files.lines(id);
   const mine = await files.mine(id);
@@ -500,6 +500,49 @@ const backend: Backend = {
       const { name } = input<{ name: string }>(raw);
       if (name) await ctx.store!.set('microphone', name);
       else await ctx.store!.delete('microphone');
+      return {};
+    },
+
+    async templates() {
+      return { templates: await files.templates() };
+    },
+
+    async save_template(raw) {
+      const t = input<{ id?: string; name: string; about: string; sections: { heading: string; guide: string }[] }>(raw);
+      const id = t.id ?? `own-${Array.from(crypto.getRandomValues(new Uint8Array(3)), (b) => b.toString(16).padStart(2, '0')).join('')}`;
+      const saved = { id, name: t.name.trim(), about: t.about.trim(), sections: t.sections.filter((x) => x.heading.trim()) };
+      await files.saveTemplate(saved);
+      return { template: saved };
+    },
+
+    async delete_template(raw) {
+      const { id } = input<{ id: string }>(raw);
+      await files.removeTemplate(id);
+      return {};
+    },
+
+    async recipes() {
+      return { recipes: (await ctx.skills!.list()).map((r) => ({ name: r.name, title: r.title, text: r.body })) };
+    },
+
+    async save_recipe(raw) {
+      const { name, title, text } = input<{ name?: string; title: string; text: string }>(raw);
+      const words = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      if (!words) throw new Error('A recipe needs a name with letters or digits.');
+      const slug = `my-${words}`.slice(0, 64);
+      if (name && name !== slug) await ctx.skills!.remove(name);
+      await ctx.skills!.add({
+        name: slug,
+        title: title.trim(),
+        description: `Use when the person asks for their recipe "${title.trim()}".`,
+        body: text.trim(),
+      });
+      return { name: slug };
+    },
+
+    async delete_recipe(raw) {
+      const { name } = input<{ name: string }>(raw);
+      await ctx.skills!.remove(name);
       return {};
     },
 

@@ -11,6 +11,7 @@ import {
   Icon,
   IconButton,
   MenuSurface,
+  MDivider,
   MItem,
   Meter,
   SegmentedControl,
@@ -21,7 +22,7 @@ import {
 } from '@hearthscale/app-ui';
 import { RichTextEditor } from '@hearthscale/app-ui/editor';
 import { quoteSeconds, shortClock, type Line, type Meeting } from '../shared/meeting.ts';
-import { TEMPLATES } from '../shared/templates.ts';
+import { TEMPLATES, type Template } from '../shared/templates.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
 import { exported, label, plainNotes, when } from './format.ts';
@@ -99,7 +100,8 @@ export function MeetingPage({
   const [title, setTitle] = useState(meeting.title);
   const [tab, setTab] = useState<'notes' | 'mine'>(opened.notes ? 'notes' : 'mine');
   const [now, setNow] = useState(Date.now());
-  const [menu, setMenu] = useState<MenuAnchor | null>(null);
+  const [menu, setMenu] = useState<{ anchor: MenuAnchor; own: Template[] } | null>(null);
+  const [told, setTold] = useState(false);
   const [more, setMore] = useState<MenuAnchor | null>(null);
   const [mics, setMics] = useState<{ anchor: MenuAnchor; devices: string[]; chosen: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -269,6 +271,21 @@ export function MeetingPage({
               </span>
             )}
             {live && (
+              <Button
+                icon={<Icon name={told ? 'check-line' : 'megaphone-line'} size={14} />}
+                onClick={() =>
+                  void navigator.clipboard
+                    .writeText('I take notes of this call with Meeting notes, on my own computer.')
+                    .then(() => {
+                      setTold(true);
+                      window.setTimeout(() => setTold(false), 1500);
+                    }, fail)
+                }
+              >
+                Tell the others
+              </Button>
+            )}
+            {live && (
               <div className="notes-levels">
                 <Meter value={levels.me} label="Me" />
                 {levels.them !== null && <Meter value={levels.them} label="Them" />}
@@ -298,7 +315,12 @@ export function MeetingPage({
                 <Button
                   icon={<Icon name="refresh-line" size={14} />}
                   trailingIcon={<Icon name="arrow-down-s-line" size={14} />}
-                  onClick={(e) => setMenu(anchorFrom('again', e))}
+                  onClick={(e) => {
+                    const anchor = anchorFrom('again', e);
+                    void host
+                      .tool<{ templates: Template[] }>('templates')
+                      .then(({ templates }) => setMenu({ anchor, own: templates }), fail);
+                  }}
                 >
                   Write again
                 </Button>
@@ -374,18 +396,22 @@ export function MeetingPage({
         </MenuSurface>
       )}
       {menu && (
-        <MenuSurface anchor={menu} onDismiss={() => setMenu(null)}>
-          {TEMPLATES.map((t) => (
-            <MItem
-              key={t.id}
-              label={t.name}
-              checked={t.id === (meeting.template ?? 'auto')}
-              onClick={() => {
-                setMenu(null);
-                setAgain(t.id);
-              }}
-            />
-          ))}
+        <MenuSurface anchor={menu.anchor} onDismiss={() => setMenu(null)}>
+          {[...TEMPLATES, ...(menu.own.length > 0 ? [null] : []), ...menu.own].map((t, i) =>
+            t === null ? (
+              <MDivider key={`divider-${i}`} />
+            ) : (
+              <MItem
+                key={t.id}
+                label={t.name}
+                checked={t.id === (meeting.template ?? 'auto')}
+                onClick={() => {
+                  setMenu(null);
+                  setAgain(t.id);
+                }}
+              />
+            ),
+          )}
         </MenuSurface>
       )}
       {again && (

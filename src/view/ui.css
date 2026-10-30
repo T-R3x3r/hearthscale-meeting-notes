@@ -318,3 +318,65 @@ body,
   gap: var(--gap-inline);
   padding: var(--pad-chip);
 }
+
+/* The person's own templates and recipes. */
+.notes-library {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--gap-row);
+}
+
+.notes-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+}
+
+.notes-form-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: var(--gap-inline);
+  align-items: center;
+}
+
+.notes-form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+
+.notes-recipe-text {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 30vh;
+  resize: vertical;
+  font-family: var(--font-app);
+  font-size: var(--fs-docs);
+  line-height: var(--lh-body);
+}
+
+.notes-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-height: var(--h-ctl);
+  padding: 0 var(--pad-row-x);
+  border-radius: var(--r-ctl);
+  background: var(--card);
+}
+
+.notes-item[data-built-in='true'] {
+  background: none;
+  color: var(--mut);
+}
+
+.notes-item-name {
+  color: var(--text);
+  font-size: var(--fs-md);
+}
+
+.notes-item-key {
+  color: var(--mut);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}

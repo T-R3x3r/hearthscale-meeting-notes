@@ -18,6 +18,8 @@ import {
   type Line,
   type Meeting,
 } from '../shared/meeting.ts';
+import { TEMPLATES_FOLDER, readTemplate, templatePath, writeTemplate } from '../shared/own.ts';
+import type { Template } from '../shared/templates.ts';
 
 const data = (path: string) => ({ root: 'data', path });
 const decoder = new TextDecoder();
@@ -93,5 +95,25 @@ export class Files {
 
   async saveNotes(id: string, text: string): Promise<void> {
     await this.ctx.fs.write(data(notesPath(id)), text);
+  }
+
+  /** The person's own templates, by name. */
+  async templates(): Promise<Template[]> {
+    if (!(await this.ctx.fs.stat(data(TEMPLATES_FOLDER)))) return [];
+    const { files } = await this.ctx.fs.list(data(TEMPLATES_FOLDER));
+    const found: Template[] = [];
+    for (const file of files.filter((f) => f.endsWith('.md'))) {
+      found.push(readTemplate(await this.text(`${TEMPLATES_FOLDER}/${file}`)));
+    }
+    return found.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async saveTemplate(template: Template): Promise<void> {
+    await this.ctx.fs.mkdir(data(TEMPLATES_FOLDER));
+    await this.ctx.fs.write(data(templatePath(template.id)), writeTemplate(template));
+  }
+
+  async removeTemplate(id: string): Promise<void> {
+    await this.ctx.fs.remove(data(templatePath(id)));
   }
 }
