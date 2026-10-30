@@ -565,6 +565,14 @@ const backend: Backend = {
       });
     },
 
+    async restore_lines(raw) {
+      const { id, lines: back } = input<{ id: string; lines: Line[] }>(raw);
+      return changeLines(id, (lines) => {
+        for (const line of back) if (!lines.some((l) => l.n === line.n)) lines.push(line);
+        lines.sort((a, b) => a.n - b.n);
+      });
+    },
+
     async name_speaker(raw) {
       const { id, speaker, name } = input<{ id: string; speaker: string; name: string }>(raw);
       const meeting = recording?.rec.meeting.id === id ? recording.rec.meeting : await files.meeting(id);

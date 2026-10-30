@@ -490,6 +490,72 @@
       ]
     },
     {
+      "name": "restore_lines",
+      "title": "Restore transcript lines",
+      "description": "Puts deleted lines back into a meeting's transcript.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "n": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "me",
+                    "them"
+                  ]
+                },
+                "start": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "end": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "text": {
+                  "type": "string"
+                },
+                "speaker": {
+                  "type": "string",
+                  "pattern": "^s[0-9]+$"
+                }
+              },
+              "required": [
+                "n",
+                "side",
+                "start",
+                "end",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "id",
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
       "name": "name_speaker",
       "title": "Name speaker",
       "description": "Gives a speaker of a meeting the name the person typed, or takes it away when the name is empty.",

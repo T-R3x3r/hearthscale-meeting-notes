@@ -7,7 +7,7 @@
  * one, and again when its notes are written or changed.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, EmptyState, Icon, Notice, ShellConfirm, useFloatingTips } from '@hearthscale/app-ui';
+import { Button, EmptyState, Icon, Notice, ShellConfirm, Toast, useFloatingTips } from '@hearthscale/app-ui';
 import { BUSY, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
@@ -47,6 +47,7 @@ export function MeetingNotes({
   const [partial, setPartial] = useState<Record<Side, string>>({ me: '', them: '' });
   const [problem, setProblem] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Meeting | null>(null);
+  const [deleted, setDeleted] = useState<{ id: string; lines: Line[] } | null>(null);
   const [picked, setPicked] = useState<{ name: string; asset: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [panel, setPanel] = useState<PanelMode | null>(first.live ? 'transcript' : null);
@@ -481,12 +482,14 @@ export function MeetingNotes({
               .then(({ lines }) => setOpen((o) => (o?.meeting.id === id ? { ...o, lines } : o)), (e) => setProblem(words(e)));
           }}
           onDelete={(ns) => {
-            const id = open?.meeting.id;
-            if (!id) return;
+            if (!open) return;
+            const id = open.meeting.id;
+            const gone = open.lines.filter((l) => ns.includes(l.n));
             setProblem(null);
-            void host
-              .tool<{ lines: Line[] }>('delete_lines', { id, lines: ns }, 'Delete lines')
-              .then(({ lines }) => setOpen((o) => (o?.meeting.id === id ? { ...o, lines } : o)), (e) => setProblem(words(e)));
+            void host.tool<{ lines: Line[] }>('delete_lines', { id, lines: ns }, 'Delete lines').then(({ lines }) => {
+              setOpen((o) => (o?.meeting.id === id ? { ...o, lines } : o));
+              setDeleted({ id, lines: gone });
+            }, (e) => setProblem(words(e)));
           }}
           onName={(speaker, name) => {
             const id = open?.meeting.id;
@@ -497,6 +500,23 @@ export function MeetingNotes({
               .then(({ meeting }) => setOpen((o) => (o?.meeting.id === id ? { ...o, meeting } : o)), (e) => setProblem(words(e)));
           }}
         />
+      )}
+      {deleted && (
+        <Toast
+          key={`${deleted.id}-${deleted.lines.map((l) => l.n).join('-')}`}
+          action={{
+            label: 'Undo',
+            onPress: () => {
+              const { id, lines: back } = deleted;
+              void host
+                .tool<{ lines: Line[] }>('restore_lines', { id, lines: back }, 'Undo')
+                .then(({ lines }) => setOpen((o) => (o?.meeting.id === id ? { ...o, lines } : o)), (e) => setProblem(words(e)));
+            },
+          }}
+          onClose={() => setDeleted(null)}
+        >
+          {deleted.lines.length > 1 ? 'Lines deleted' : 'Line deleted'}
+        </Toast>
       )}
       {deleting && (
         <ShellConfirm
