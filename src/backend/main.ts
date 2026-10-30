@@ -75,7 +75,7 @@ let callEnd: ReturnType<typeof setTimeout> | null = null;
 const writing = new Map<string, AbortController>();
 const indexing = new Map<string, ReturnType<typeof setTimeout>>();
 
-const emit = (name: string, data: unknown) => void ctx.events!.emit!({ name, data, durable: false });
+const emit = (name: string, data: unknown) => void ctx.events.emit({ name, data, durable: false });
 
 function words(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
@@ -124,9 +124,9 @@ function hintWords(): string[] {
 /** The id of the microphone the person chose, or undefined for the
  *  system's default; refused when the chosen one is not connected. */
 async function microphone(): Promise<string | undefined> {
-  const chosen = (await ctx.store!.get('microphone')) as string | null;
+  const chosen = (await ctx.store.get('microphone')) as string | null;
   if (!chosen) return undefined;
-  const found = (await ctx.capture!.devices('microphone')).find((d) => d.name === chosen);
+  const found = (await ctx.capture.devices('microphone')).find((d) => d.name === chosen);
   if (!found) throw new Error(`The microphone "${chosen}" is not connected. Choose another one.`);
   return found.id;
 }
@@ -305,7 +305,7 @@ async function transcribe(asset: string, name: string): Promise<Meeting> {
 }
 
 async function notify(title: string, body: string, path: string, action?: { title: string; id: string }) {
-  await ctx.notify!({
+  await ctx.notify({
     title,
     body,
     open: { surface: 'meetings', path },
@@ -369,11 +369,11 @@ const backend: Backend = {
     ctx.settings.on('changed', (values) => {
       settings = values as unknown as Settings;
     });
-    ctx.capture!.on('chunk', (part) => void recording?.rec.hear(part));
-    ctx.capture!.on('ended', ({ capture, reason, asset }) => void recording?.rec.ended(capture, reason, asset));
-    ctx.triggers!.on('record', () => void record(undefined, false).catch((e) => ctx.log('warn', words(e))));
-    ctx.triggers!.on('call', (data) => void call(data as { inUse: boolean }).catch((e) => ctx.log('warn', words(e))));
-    ctx.notifications!.on('action', (press) => void act(press).catch((e) => ctx.log('warn', words(e))));
+    ctx.capture.on('chunk', (part) => void recording?.rec.hear(part));
+    ctx.capture.on('ended', ({ capture, reason, asset }) => void recording?.rec.ended(capture, reason, asset));
+    ctx.triggers.on('record', () => void record(undefined, false).catch((e) => ctx.log('warn', words(e))));
+    ctx.triggers.on('call', (data) => void call(data as { inUse: boolean }).catch((e) => ctx.log('warn', words(e))));
+    ctx.notifications.on('action', (press) => void act(press).catch((e) => ctx.log('warn', words(e))));
   },
 
   tools: {
@@ -521,14 +521,14 @@ const backend: Backend = {
     },
 
     async microphones() {
-      const devices = await ctx.capture!.devices('microphone');
-      return { devices: devices.map((d) => d.name), chosen: ((await ctx.store!.get('microphone')) as string | null) ?? '' };
+      const devices = await ctx.capture.devices('microphone');
+      return { devices: devices.map((d) => d.name), chosen: ((await ctx.store.get('microphone')) as string | null) ?? '' };
     },
 
     async choose_microphone(raw) {
       const { name } = input<{ name: string }>(raw);
-      if (name) await ctx.store!.set('microphone', name);
-      else await ctx.store!.delete('microphone');
+      if (name) await ctx.store.set('microphone', name);
+      else await ctx.store.delete('microphone');
       return {};
     },
 
@@ -551,7 +551,7 @@ const backend: Backend = {
     },
 
     async requests() {
-      return { requests: (await ctx.skills!.list()).map((r) => ({ name: r.name, title: r.title, text: r.body })) };
+      return { requests: (await ctx.skills.list()).map((r) => ({ name: r.name, title: r.title, text: r.body })) };
     },
 
     async save_request(raw) {
@@ -559,8 +559,8 @@ const backend: Backend = {
       const words = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       if (!words) throw new Error('A saved request needs a name with letters or digits.');
       const slug = `my-${words}`.slice(0, 64);
-      if (name && name !== slug) await ctx.skills!.remove(name);
-      await ctx.skills!.add({
+      if (name && name !== slug) await ctx.skills.remove(name);
+      await ctx.skills.add({
         name: slug,
         title: title.trim(),
         description: `Use when the person asks for their saved request "${title.trim()}".`,
@@ -571,7 +571,7 @@ const backend: Backend = {
 
     async delete_request(raw) {
       const { name } = input<{ name: string }>(raw);
-      await ctx.skills!.remove(name);
+      await ctx.skills.remove(name);
       return {};
     },
 

@@ -59,7 +59,7 @@ function wav(pcm: Uint8Array): Uint8Array {
 
 /** Runs a job to its end; answers it, or rejects with why it failed. */
 export async function run(ctx: AppContext, kind: string, input: Record<string, unknown>): Promise<Job> {
-  const jobs = ctx.jobs!;
+  const jobs = ctx.jobs;
   const job = await jobs.submit({ kind, input });
   return new Promise<Job>((resolve, reject) => {
     const settle = (now: Job) => {

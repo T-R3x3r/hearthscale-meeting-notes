@@ -118,7 +118,7 @@ export class Writer {
 
   /** The chat model's window in tokens, where its provider states it. */
   private async window(): Promise<number | null> {
-    const { cards, chosen } = await this.ctx.models!.list({ kind: 'chat' });
+    const { cards, chosen } = await this.ctx.models.list({ kind: 'chat' });
     const picked = chosen.chat;
     if (!picked || picked.card === null) {
       throw new Error(picked?.reason ?? 'No chat model can write the notes. Choose one in Settings > Apps > Meeting notes.');
@@ -134,7 +134,7 @@ export class Writer {
     signal: AbortSignal,
   ): Promise<T> {
     let text = '';
-    for await (const delta of this.ctx.models!.complete(
+    for await (const delta of this.ctx.models.complete(
       {
         messages,
         format: { name, schema },

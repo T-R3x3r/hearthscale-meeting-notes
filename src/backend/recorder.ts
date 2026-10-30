@@ -155,7 +155,7 @@ export class Recording {
     source: 'microphone' | 'system-sound',
     options: { echo?: boolean; keep: boolean; device?: string },
   ): Promise<Source> {
-    const stream = await this.ctx.models!.listen({
+    const stream = await this.ctx.models.listen({
       ...(this.options.language && { language: this.options.language }),
       ...(this.options.words?.length && { words: this.options.words }),
     });
@@ -163,7 +163,7 @@ export class Recording {
     const done = new Promise<void>((resolve) => (finish = resolve));
     let started: { capture: string; startedAt: number };
     try {
-      started = await this.ctx.capture!.start(source, options);
+      started = await this.ctx.capture.start(source, options);
     } catch (e) {
       await stream.close();
       throw e;
@@ -265,7 +265,7 @@ export class Recording {
     const ending = this.sources;
     this.sources = [];
     for (const source of ending) {
-      const asset = await this.ctx.capture!.stop(source.capture);
+      const asset = await this.ctx.capture.stop(source.capture);
       source.asset = typeof asset === 'string' ? asset : null;
     }
     await this.finish(ending);

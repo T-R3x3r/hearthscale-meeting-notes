@@ -136,7 +136,7 @@ export function MeetingNotes({
           ? label(open.meeting, locale, timeZone)
           : 'Meeting notes';
   useEffect(() => {
-    void host.request('hearthscale/ui/set-tab', { title: tabTitle });
+    void host.call('hearthscale/ui/set-tab', { title: tabTitle });
   }, [host, tabTitle]);
 
   useEffect(() => {
@@ -177,7 +177,7 @@ export function MeetingNotes({
     setUploading(true);
     try {
       const blob = await forTranscription(file);
-      const asset = await host.upload({
+      const { asset } = await host.call('hearthscale/ui/upload-file', {
         name: `${file.name.replace(/\.[^.]+$/, '')}.wav`,
         mediaType: 'audio/wav',
         blob,

@@ -45,17 +45,17 @@ export class Answers {
     const title = meeting.title || meeting.created.slice(0, 10);
     for (const part of Object.keys(PARTS) as (keyof typeof PARTS)[]) {
       const source = `meeting:${meeting.id}:${part}`;
-      if (texts[part]) await this.ctx.index!.put({ source, title, pages: [{ text: texts[part] }] });
-      else await this.ctx.index!.remove(source);
+      if (texts[part]) await this.ctx.index.put({ source, title, pages: [{ text: texts[part] }] });
+      else await this.ctx.index.remove(source);
     }
   }
 
   async remove(id: string): Promise<void> {
-    for (const part of Object.keys(PARTS)) await this.ctx.index!.remove(`meeting:${id}:${part}`);
+    for (const part of Object.keys(PARTS)) await this.ctx.index.remove(`meeting:${id}:${part}`);
   }
 
   async search(query: string, limit: number) {
-    const hits = await this.ctx.index!.search(query, limit);
+    const hits = await this.ctx.index.search(query, limit);
     const meetings = new Map((await this.files.list()).map((m) => [m.id, m]));
     return {
       hits: hits.flatMap((hit) => {

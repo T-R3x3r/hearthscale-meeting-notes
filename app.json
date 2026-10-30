@@ -59,8 +59,7 @@
     "jobs",
     "capture.microphone",
     "capture.system-sound",
-    "notifications",
-    "surfaces.open"
+    "notifications"
   ],
   "models": {
     "chat": {

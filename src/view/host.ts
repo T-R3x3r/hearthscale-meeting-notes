@@ -3,8 +3,9 @@
  * which keep the meetings and run the recording, and the events the
  * backend sends while it records and writes.
  */
-import { McpUiMessageResultSchema, type App } from '@modelcontextprotocol/ext-apps';
-import type { ViewHostMethods } from '@hearthscale/app';
+import type { App } from '@modelcontextprotocol/ext-apps';
+import type { HostCall } from '@hearthscale/app';
+import { hostCall } from '@hearthscale/app/view';
 
 /** Why something failed, in the platform's words without the SDK's error
  *  code before them. */
@@ -15,8 +16,11 @@ type Handler = (data: never) => void;
 
 export class Host {
   private readonly handlers = new Map<string, Set<Handler>>();
+  /** Sends a request of the platform's bridge, typed by its method. */
+  readonly call: HostCall;
 
   constructor(readonly app: App) {
+    this.call = hostCall(app);
     app.fallbackNotificationHandler = async ({ method, params }) => {
       if (method === 'hearthscale/events/event') {
         const { name, data } = params as { name: string; data: never };
@@ -25,11 +29,6 @@ export class Host {
         for (const fn of this.handlers.get(method) ?? []) fn(params as never);
       }
     };
-  }
-
-  /** Keeps a file as an asset of the app; answers its id. */
-  async upload(params: ViewHostMethods['hearthscale/ui/upload-file']['params']): Promise<string> {
-    return (await this.request<ViewHostMethods['hearthscale/ui/upload-file']['result']>('hearthscale/ui/upload-file', params)).asset;
   }
 
   /** Calls a tool of the backend and answers its structured result; a
@@ -46,11 +45,6 @@ export class Host {
       throw new Error(text && 'text' in text ? text.text : `${label ?? 'The action'} could not be done. Try again.`);
     }
     return result.structuredContent as T;
-  }
-
-  /** Sends a request of the platform's bridge and answers its result. */
-  async request<T>(method: string, params: object): Promise<T> {
-    return (await this.app.request({ method, params } as never, McpUiMessageResultSchema)) as unknown as T;
   }
 
   /** Hears one of the backend's events, or a notification of the platform

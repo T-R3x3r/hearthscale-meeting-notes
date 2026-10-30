@@ -9,8 +9,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '@hearthscale/app-ui';
 import { words, type Host } from './host.ts';
 
-type Chosen = { card: string } | { card: null; reason: string };
-
 const WHERE = 'in Settings > Apps > Meeting notes';
 
 /** The notice for the kinds the app has no model of, by which are missing. */
@@ -29,7 +27,7 @@ export function ModelNeeds({ host }: { host: Host }) {
 
   const load = useCallback(async () => {
     const has = async (kind: string) => {
-      const { chosen } = await host.request<{ chosen: Record<string, Chosen> }>('hearthscale/models/list', { kind });
+      const { chosen } = await host.call('hearthscale/models/list', { kind });
       return !!chosen[kind]?.card;
     };
     const [transcription, chat] = await Promise.all([has('transcription'), has('chat')]);
