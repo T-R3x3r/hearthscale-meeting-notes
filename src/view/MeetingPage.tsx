@@ -286,20 +286,7 @@ export function MeetingPage({
             {meeting.unheard && <Notice>Only the microphone is heard: {meeting.unheard}</Notice>}
             {live?.quiet && <Notice>No sound from the other side yet.</Notice>}
             {meeting.stopped && !live && <Notice>{meeting.stopped}</Notice>}
-            {meeting.failed && !writing && (
-              <Notice>
-                {meeting.failed}
-                {(opened.lines.length > 0 || opened.mine) && (
-                  <button
-                    type="button"
-                    className="hs-link"
-                    onClick={() => act('write_notes', 'Write again', { id: meeting.id, template: meeting.template ?? 'auto' })}
-                  >
-                    Write again
-                  </button>
-                )}
-              </Notice>
-            )}
+            {meeting.failed && !writing && <Notice>{meeting.failed}</Notice>}
 
             {hasNotes && (
               <div className="notes-tabs">
