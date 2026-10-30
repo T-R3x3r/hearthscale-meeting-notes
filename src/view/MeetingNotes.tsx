@@ -274,6 +274,11 @@ export function MeetingNotes({
     setListShown(false);
   };
   const atStart = section === 'meetings' && open === null;
+  /** Ask about all meetings: at the start page's top, or in the bar of a
+   *  narrow tile. */
+  const askAll = (
+    <IconAction name="Ask" icon="question-answer-line" pressed={panel === 'ask'} onClick={() => setPanel(panel === 'ask' ? null : 'ask')} />
+  );
 
   const sideShown = wide || listShown;
   const pageShown = wide || !listShown;
@@ -287,6 +292,12 @@ export function MeetingNotes({
             icon={listShown ? 'side-narrow' : 'side-wide'}
             onClick={() => setListShown(!listShown)}
           />
+          {atStart && !listShown && (
+            <>
+              <span className="hs-flex-spacer" />
+              {askAll}
+            </>
+          )}
         </div>
       )}
       {sideShown && (
@@ -422,15 +433,12 @@ export function MeetingNotes({
         ) : (
           <div className="hs-scroll hs-settings-scroll notes-page">
             <main className="hs-settings-content notes-start-sheet">
-              <div className="notes-top">
-                <span className="hs-flex-spacer" />
-                <IconAction
-                  name="Ask"
-                  icon="question-answer-line"
-                  pressed={panel === 'ask'}
-                  onClick={() => setPanel(panel === 'ask' ? null : 'ask')}
-                />
-              </div>
+              {wide && (
+                <div className="notes-top">
+                  <span className="hs-flex-spacer" />
+                  {askAll}
+                </div>
+              )}
               <div className="hs-empty-view">
                 <EmptyState
                   icon={<Icon name={picked ? 'file-music-line' : 'mic-line'} size={30} />}
