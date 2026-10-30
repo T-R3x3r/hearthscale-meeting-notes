@@ -10,8 +10,9 @@ Open Meeting notes from the rail and choose **Record**. Write short points under
 
 - **Transcript** shows every line as people speak, with who said it and when. Name a speaker once, and every line of theirs takes the name.
 - **Ask** answers questions about one meeting, or about all your meetings from the start page.
-- **Meeting types** set the sections of the notes, such as a one-on-one or a sales call. Open one to see its sections, use it for a meeting, or duplicate it and make it your own.
+- **Meeting types** set the sections of the notes, such as a one-on-one or a sales call. Open one to see its sections, use it for a meeting, use it by default, or duplicate it and make it your own.
 - **Saved requests** are requests you make often, such as a follow-up mail or the next steps. Type `/` in Ask to use one.
+- **Search meetings** finds the meetings whose title, notes or transcript hold the words you type.
 - **Transcribe a recording** makes a meeting from a sound file.
 
 When another program starts to use your microphone, such as a call, Meeting notes asks whether to take notes.
@@ -23,7 +24,7 @@ Meeting notes runs on models on your computer:
 - **A transcription model**, to hear what people say. Required.
 - **A chat model**, to write the notes and answer in Ask. Required. A model of about 4B parameters, such as Qwen3 4B, writes good notes; smaller models often repeat the transcript.
 - **A diarization model**, to tell the speakers apart. Optional.
-- **An embedding model**, to search all your meetings. Optional.
+- **An embedding model**, so that Ask finds what you ask about in all your meetings. Optional.
 
 Download them in Hearthscale Server, then choose them in **Settings > Apps > Meeting notes**. If a required model is missing, Meeting notes says so and names that place.
 

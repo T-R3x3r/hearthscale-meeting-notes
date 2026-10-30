@@ -23,7 +23,7 @@ pnpm install
 pnpm build        # type-checks everything, then builds the view
 ```
 
-The SDK packages come as files from the pre-release builder kit; `package.json` names them by their path on the developer's computer.
+The SDK packages, `@hearthscale/app` and `@hearthscale/app-ui`, come from npm. pnpm refuses a package published less than a day ago, so `pnpm-workspace.yaml` names the SDK version the lockfile holds.
 
 ## Where the meetings live
 
