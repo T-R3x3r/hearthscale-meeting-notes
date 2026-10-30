@@ -1,8 +1,9 @@
 /**
  * What Meeting notes cannot work without: a transcription model to hear a
- * meeting and a chat model to write its notes. For a kind with no model
- * the app can run, a notice says so and names the place where a person
- * chooses the app's models: its page in Hearthscale's settings.
+ * meeting and a chat model to write its notes. When the app can run no
+ * model of one of these kinds, one notice says so and names the place
+ * where a person chooses the app's models: its page in Hearthscale's
+ * settings.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '@hearthscale/app-ui';
@@ -10,24 +11,29 @@ import { words, type Host } from './host.ts';
 
 type Chosen = { card: string } | { card: null; reason: string };
 
-const NEEDED = [
-  { kind: 'transcription', need: 'Meeting notes needs a transcription model to hear meetings.' },
-  { kind: 'chat', need: 'Meeting notes needs a chat model to write notes.' },
-] as const;
+const WHERE = 'in Settings > Apps > Meeting notes';
 
-const WHERE = 'Choose one in Settings > Apps > Meeting notes.';
+/** The notice for the kinds the app has no model of, by which are missing. */
+const need = (transcription: boolean, chat: boolean) =>
+  transcription && chat
+    ? `Meeting notes needs a transcription model and a chat model: choose them ${WHERE}.`
+    : transcription
+      ? `Meeting notes needs a transcription model to hear meetings: choose one ${WHERE}.`
+      : chat
+        ? `Meeting notes needs a chat model to write notes: choose one ${WHERE}.`
+        : null;
 
 export function ModelNeeds({ host }: { host: Host }) {
-  const [missing, setMissing] = useState<string[]>([]);
+  const [missing, setMissing] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const now: string[] = [];
-    for (const { kind, need } of NEEDED) {
+    const has = async (kind: string) => {
       const { chosen } = await host.request<{ chosen: Record<string, Chosen> }>('hearthscale/models/list', { kind });
-      if (!chosen[kind]?.card) now.push(need);
-    }
-    setMissing(now);
+      return !!chosen[kind]?.card;
+    };
+    const [transcription, chat] = await Promise.all([has('transcription'), has('chat')]);
+    setMissing(need(!transcription, !chat));
   }, [host]);
 
   useEffect(() => {
@@ -40,11 +46,7 @@ export function ModelNeeds({ host }: { host: Host }) {
   return (
     <>
       {problem && <Notice>{problem}</Notice>}
-      {missing.map((need) => (
-        <Notice key={need}>
-          {need} {WHERE}
-        </Notice>
-      ))}
+      {missing && <Notice>{missing}</Notice>}
     </>
   );
 }
