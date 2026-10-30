@@ -46,22 +46,23 @@ body,
 }
 
 /* The sidebar's top: New meeting, then the search over the meetings, at
-   the inset and the step of the list under them. */
+   the inset of the list under them and the space Hearthscale's settings
+   leave under their search. */
 .notes-side-head {
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: calc(var(--space) * 1.25);
+  gap: var(--gap-stack);
   padding-right: var(--pad-sidebar);
 }
 
-/* The row of the start page, under the search with the space Hearthscale's
-   settings leave under theirs, and a list step above the meetings. */
+/* The row of the start page, the same space under the search, and a list
+   step above the meetings. */
 .notes-all {
   display: flex;
   flex: none;
   flex-direction: column;
-  padding: calc(var(--space) * 2) var(--pad-sidebar) calc(var(--space) * 1.25) 0;
+  padding: var(--gap-stack) var(--pad-sidebar) calc(var(--space) * 1.25) 0;
 }
 
 .notes-list-empty {
