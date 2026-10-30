@@ -269,6 +269,7 @@ export function MeetingNotes({
   const home = () => {
     openId.current = null;
     setOpen(null);
+    setProblem(null);
     setSection('meetings');
     setListShown(false);
   };

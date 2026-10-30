@@ -1,9 +1,10 @@
 /**
  * One meeting: its title, the recorder, the person's notes and the notes
  * the model wrote. The person's own notes and their changes to the written
- * notes are kept half a second after the typing stops. A quote's time in
- * the notes shows its words on hover and opens the transcript there on a
- * press.
+ * notes are kept half a second after the typing stops. An editor keeps
+ * only changes made while it has the focus, never the form it gives the
+ * text it loads. A quote's time in the notes shows its words on hover and
+ * opens the transcript there on a press.
  */
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import {
@@ -360,7 +361,7 @@ export function MeetingPage({
                     key={`notes-${opened.version}`}
                     label="Notes"
                     content={opened.notes}
-                    onChange={(editor) => saveNotes(editor.getMarkdown())}
+                    onChange={(editor) => editor.isFocused && saveNotes(editor.getMarkdown())}
                   />
                 </div>
               )
@@ -370,7 +371,7 @@ export function MeetingPage({
                 label="My notes"
                 placeholder="Anna fixes the login bug by Wednesday"
                 content={opened.mine}
-                onChange={(editor) => saveMine(editor.getMarkdown())}
+                onChange={(editor) => editor.isFocused && saveMine(editor.getMarkdown())}
               />
             )}
           </section>
