@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@hearthscale/app-ui':
-        specifier: ^0.2.2
-        version: 0.2.2(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: ^0.2.3
+        version: 0.2.3(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react:
         specifier: ^19.3.0
         version: 19.3.1
@@ -19,8 +19,8 @@ importers:
         version: 19.3.1(react@19.3.1)
     devDependencies:
       '@hearthscale/app':
-        specifier: ^0.2.2
-        version: 0.2.2(@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7))
+        specifier: ^0.2.3
+        version: 0.2.3(@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7))
       '@modelcontextprotocol/ext-apps':
         specifier: 1.7.5
         version: 1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7)
@@ -281,8 +281,8 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
-  '@hearthscale/app-ui@0.2.2':
-    resolution: {integrity: sha512-EALwAhroUvh6RsR1ixqfdXqdzXjDYYj3DOVmkg1KVd0xQIP68D4amDyfdH5RP89DzKPlA4UYHlSijS+Gg0ZO8Q==}
+  '@hearthscale/app-ui@0.2.3':
+    resolution: {integrity: sha512-YD7t21+aEjJEM3LZkTSivdfs5QxYra665W71VNRQwNnfAQHOrGqXw7pSrN+8MYv4dykfPlAa04SRsJuhXpArzQ==}
     peerDependencies:
       '@types/react': ^19.3.0
       react: ^19.3.0
@@ -291,8 +291,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@hearthscale/app@0.2.2':
-    resolution: {integrity: sha512-ntPcj3yxfcSWDmuMoIkTB7MZjurBk2bbxsfVKZsMVPwRrrqNxpBRi8WX4ETpCG9c06usoJsg6bKjtQ0931iKXg==}
+  '@hearthscale/app@0.2.3':
+    resolution: {integrity: sha512-N2Jl9Rv+Ypw56/wQwtDjNEZ/Rms5ZtsinRmmLo4aZ2epzqQG9r89rLqwPoSd8tKzN68J3DD8gFFQXmHplQlt0A==}
     peerDependencies:
       '@modelcontextprotocol/ext-apps': ^1.7.5
     peerDependenciesMeta:
@@ -2305,7 +2305,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@hearthscale/app-ui@0.2.2(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@hearthscale/app-ui@0.2.3(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@floating-ui/dom': 1.8.0
       '@tanstack/react-virtual': 3.14.14(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -2331,7 +2331,7 @@ snapshots:
       - '@types/react-dom'
       - supports-color
 
-  '@hearthscale/app@0.2.2(@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7))':
+  '@hearthscale/app@0.2.3(@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7))':
     optionalDependencies:
       '@modelcontextprotocol/ext-apps': 1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7)
 

@@ -302,9 +302,7 @@ export function MeetingNotes({
       )}
       {sideShown && (
         <div className="hs-sidebar-column notes-side">
-          {/* The search takes words of meetings and names, which spelling marks
-              would only cover; the kit's field inherits this setting. */}
-          <div className="notes-side-head" spellCheck={false}>
+          <div className="notes-side-head">
             <Button variant="secondary" size="sm" fullWidth icon={<Icon name="add-line" size={14} />} onClick={() => void create()}>
               New meeting
             </Button>

@@ -5,5 +5,5 @@ allowBuilds:
 # pnpm refuses packages published less than a day ago; the SDK versions the
 # lockfile holds are allowed before that day ends.
 minimumReleaseAgeExclude:
-  - '@hearthscale/app@0.2.2'
-  - '@hearthscale/app-ui@0.2.2'
+  - '@hearthscale/app@0.2.3'
+  - '@hearthscale/app-ui@0.2.3'
