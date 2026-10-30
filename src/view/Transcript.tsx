@@ -148,7 +148,13 @@ export function Transcript({
               placeholder={`Speaker ${naming.speaker.slice(1)}`}
               value={naming.name}
               onChange={(e) => setNaming({ ...naming, name: e.target.value })}
-              onKeyDown={(e) => e.key === 'Enter' && name()}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                // The speaker's name takes the focus back as the popover
+                // closes; the key must not press it again.
+                e.preventDefault();
+                name();
+              }}
             />
             <Button size="sm" variant="primary" onClick={name}>
               Name
