@@ -179,6 +179,14 @@ body,
   flex: 1;
 }
 
+/* A segmented control as wide as its longest choice: equal columns that
+   each fit the longest label, so no label runs out of its option. */
+.notes .hs-segmented {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+}
+
 .notes-tabs {
   display: flex;
   align-items: center;
