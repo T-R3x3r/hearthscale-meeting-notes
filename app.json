@@ -85,9 +85,6 @@
     "prompt": [
       "prompt/system.md"
     ],
-    "skills": [
-      "skills"
-    ],
     "tools": [
       "search_meetings",
       "list_meetings",

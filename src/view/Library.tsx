@@ -8,7 +8,6 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
-  EmptyState,
   FactRow,
   Icon,
   LinkRow,
@@ -29,14 +28,10 @@ import {
 } from '@hearthscale/app-ui';
 import type { Meeting } from '../shared/meeting.ts';
 import { TEMPLATES, type Template } from '../shared/templates.ts';
+import { BUILT_IN, OWN, type Request } from '../shared/requests.ts';
 import { words, type Host } from './host.ts';
 import { IconAction, Page } from './parts.tsx';
 
-interface Request {
-  name: string;
-  title: string;
-  text: string;
-}
 
 const blankTemplate = (): Template => ({ id: '', name: '', about: '', sections: [{ heading: '', guide: '' }] });
 
@@ -274,39 +269,44 @@ export function TemplatesPage({
 }
 
 export function RequestsPage({ host }: { host: Host }) {
-  const [own, setOwn] = useState<Request[]>([]);
+  const [all, setAll] = useState<Request[]>([]);
+  const [viewing, setViewing] = useState<Request | null>(null);
   const [editing, setEditing] = useState<Request | null>(null);
   const [deleting, setDeleting] = useState<Request | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
   const load = () =>
-    void host.tool<{ requests: Request[] }>('requests').then(({ requests }) => setOwn(requests), (e) => setProblem(words(e)));
+    void host.tool<{ requests: Request[] }>('requests').then(({ requests }) => setAll(requests), (e) => setProblem(words(e)));
   useEffect(load, [host]);
+
+  const own = all.filter((r) => r.name.startsWith(OWN));
+  const mine = viewing !== null && viewing.name.startsWith(OWN);
 
   const save = async () => {
     if (!editing) return;
     setProblem(null);
     try {
-      await host.tool(
+      const { name } = await host.tool<{ name: string }>(
         'save_request',
         { ...(editing.name && { name: editing.name }), title: editing.title, text: editing.text },
         'Save',
       );
       setEditing(null);
+      setViewing({ ...editing, name });
       load();
     } catch (e) {
       setProblem(words(e));
     }
   };
 
-  const blank = () => setEditing({ name: '', title: '', text: '' });
+  const blank = () => setEditing({ name: '', title: '', description: '', text: '' });
 
   return (
     <Page>
-      <PageTitle>{editing ? (editing.name ? 'Edit request' : 'New request') : 'Saved requests'}</PageTitle>
-      {problem && <Notice>{problem}</Notice>}
       {editing ? (
         <>
+          <PageTitle>{editing.name ? 'Edit request' : 'New request'}</PageTitle>
+          {problem && <Notice>{problem}</Notice>}
           <div className="notes-form">
             <TextField
               label="Name"
@@ -327,29 +327,49 @@ export function RequestsPage({ host }: { host: Host }) {
               />
             </div>
             <div className="notes-form-actions">
-              {editing.name && (
-                <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(editing)}>
-                  Delete request
-                </Button>
-              )}
               <span className="hs-flex-spacer" />
-              <Button onClick={() => setEditing(null)}>
-                Cancel
-              </Button>
+              <Button onClick={() => setEditing(null)}>Cancel</Button>
               <Button variant="primary" disabled={!editing.title.trim() || !editing.text.trim()} onClick={() => void save()}>
                 Save
               </Button>
             </div>
           </div>
         </>
-      ) : own.length === 0 ? (
-        <EmptyState icon={<Icon name="bookmark-line" size={30} />} title="No saved requests yet">
-          <Button icon={<Icon name="add-line" size={14} />} onClick={blank}>
-            New request
-          </Button>
-        </EmptyState>
+      ) : viewing ? (
+        <>
+          <div className="notes-top">
+            <IconAction name="Saved requests" icon="arrow-left-line" onClick={() => setViewing(null)} />
+            <PageTitle>{viewing.title}</PageTitle>
+          </div>
+          {problem && <Notice>{problem}</Notice>}
+          <SettingsSection first>Request</SettingsSection>
+          <SettingsCard>
+            <ListRow title={viewing.text} />
+          </SettingsCard>
+          <div className="notes-form-actions notes-type-actions">
+            {mine && (
+              <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(viewing)}>
+                Delete request
+              </Button>
+            )}
+            <span className="hs-flex-spacer" />
+            <Button
+              icon={<Icon name="file-copy-line" size={14} />}
+              onClick={() => setEditing({ ...viewing, name: '', title: `${viewing.title} copy` })}
+            >
+              Duplicate
+            </Button>
+            {mine && (
+              <Button icon={<Icon name="pencil-line" size={14} />} onClick={() => setEditing(viewing)}>
+                Edit
+              </Button>
+            )}
+          </div>
+        </>
       ) : (
         <>
+          <PageTitle>Saved requests</PageTitle>
+          {problem && <Notice>{problem}</Notice>}
           <SettingsSection
             first
             action={
@@ -358,19 +378,29 @@ export function RequestsPage({ host }: { host: Host }) {
               </Button>
             }
           >
-            My requests
+            My saved requests
           </SettingsSection>
           <SettingsCard>
-            {own.map((r) => (
-              <LinkRow
-                key={r.name}
-                title={
-                  <>
-                    {r.title} <Mono>/{r.name}</Mono>
-                  </>
-                }
-                onOpen={() => setEditing(r)}
-              />
+            {own.length > 0 ? (
+              own.map((r) => (
+                <LinkRow
+                  key={r.name}
+                  title={
+                    <>
+                      {r.title} <Mono>/{r.name}</Mono>
+                    </>
+                  }
+                  onOpen={() => setViewing(r)}
+                />
+              ))
+            ) : (
+              <ListRow title="No saved requests of your own yet" />
+            )}
+          </SettingsCard>
+          <SettingsSection>Built-in</SettingsSection>
+          <SettingsCard>
+            {BUILT_IN.map((r) => (
+              <LinkRow key={r.name} title={r.title} onOpen={() => setViewing(r)} />
             ))}
           </SettingsCard>
         </>
@@ -384,7 +414,7 @@ export function RequestsPage({ host }: { host: Host }) {
           onConfirm={() => {
             const name = deleting.name;
             setDeleting(null);
-            setEditing(null);
+            setViewing(null);
             void host.tool('delete_request', { name }, 'Delete').then(load, (e) => setProblem(words(e)));
           }}
           onCancel={() => setDeleting(null)}

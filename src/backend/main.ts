@@ -16,6 +16,7 @@
 import type { AppContext, Backend } from '@hearthscale/app';
 import type { Line, Meeting, MeetingState, Side } from '../shared/meeting.ts';
 import { AUTO, TEMPLATES, template, type Template } from '../shared/templates.ts';
+import { BUILT_IN, OWN } from '../shared/requests.ts';
 import { Answers } from './answers.ts';
 import { Files } from './files.ts';
 import { Recording, type Live } from './recorder.ts';
@@ -101,6 +102,18 @@ function reindex(id: string): void {
         .catch((e) => ctx.log('warn', `the index did not take the meeting: ${words(e)}`));
     }, INDEX_MS),
   );
+}
+
+/** Adds the app's own saved requests as skills of its agent, each only
+ *  where it is missing or changed, so one the person switched off in
+ *  Settings stays off. */
+async function addBuiltIns(): Promise<void> {
+  const held = new Map((await ctx.skills.list()).map((s) => [s.name, s]));
+  for (const r of BUILT_IN) {
+    const now = held.get(r.name);
+    if (now && now.title === r.title && now.description === r.description && now.body === r.text) continue;
+    await ctx.skills.add({ name: r.name, title: r.title, description: r.description, body: r.text });
+  }
 }
 
 async function saveMeeting(meeting: Meeting): Promise<void> {
@@ -438,6 +451,7 @@ const backend: Backend = {
     writer = new Writer(ctx);
     answers = new Answers(ctx, files, () => settings.name);
     await readSettings();
+    await addBuiltIns();
     ctx.settings.on('changed', (values) => {
       settings = values as unknown as Settings;
     });
@@ -623,19 +637,21 @@ const backend: Backend = {
     },
 
     async requests() {
-      return { requests: (await ctx.skills.list()).map((r) => ({ name: r.name, title: r.title, text: r.body })) };
+      return {
+        requests: (await ctx.skills.list()).map((r) => ({ name: r.name, title: r.title, description: r.description, text: r.body })),
+      };
     },
 
     async save_request(raw) {
       const { name, title, text } = input<{ name?: string; title: string; text: string }>(raw);
       const words = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       if (!words) throw new Error('A saved request needs a name with letters or digits.');
-      const slug = `my-${words}`.slice(0, 64);
+      const slug = `${OWN}${words}`.slice(0, 64);
       if (name && name !== slug) await ctx.skills.remove(name);
       await ctx.skills.add({
         name: slug,
         title: title.trim(),
-        description: `Use when the person asks for their saved request "${title.trim()}".`,
+        description: `Your saved request "${title.trim()}".`,
         body: text.trim(),
       });
       return { name: slug };
