@@ -46,6 +46,7 @@ export function TemplatesPage({
   onUse: (meeting: string, template: string) => void;
 }) {
   const [own, setOwn] = useState<Template[]>([]);
+  const [chosen, setChosen] = useState<string | null>(null);
   const [viewing, setViewing] = useState<Template | null>(null);
   const [editing, setEditing] = useState<Template | null>(null);
   const [deleting, setDeleting] = useState<Template | null>(null);
@@ -55,8 +56,14 @@ export function TemplatesPage({
   const tips = useFloatingTips();
 
   const load = () =>
-    void host.tool<{ templates: Template[] }>('templates').then(({ templates }) => setOwn(templates), (e) => setProblem(words(e)));
+    void host.tool<{ templates: Template[]; default: string }>('templates').then(({ templates, default: first }) => {
+      setOwn(templates);
+      setChosen(first);
+    }, (e) => setProblem(words(e)));
   useEffect(load, [host]);
+
+  const useByDefault = (id: string) =>
+    void host.tool('set_default_template', { id }, 'Use by default').then(load, (e) => setProblem(words(e)));
 
   const save = async () => {
     if (!editing) return;
@@ -182,6 +189,11 @@ export function TemplatesPage({
                 Edit
               </Button>
             )}
+            {chosen !== null && viewing.id !== chosen && (
+              <Button icon={<Icon name="check-line" size={14} />} onClick={() => useByDefault(viewing.id)}>
+                Use by default
+              </Button>
+            )}
             <span className="hs-tipwrap" {...useWhy.hover}>
               <Button
                 variant="primary"
@@ -211,7 +223,9 @@ export function TemplatesPage({
           </SettingsSection>
           <SettingsCard>
             {own.length > 0 ? (
-              own.map((t) => <LinkRow key={t.id} title={t.name} onOpen={() => setViewing(t)} />)
+              own.map((t) => (
+                <LinkRow key={t.id} title={t.name} value={t.id === chosen ? 'Default' : undefined} onOpen={() => setViewing(t)} />
+              ))
             ) : (
               <ListRow title="No meeting types of your own yet" />
             )}
@@ -219,7 +233,7 @@ export function TemplatesPage({
           <SettingsSection>Built-in</SettingsSection>
           <SettingsCard>
             {TEMPLATES.map((t) => (
-              <LinkRow key={t.id} title={t.name} onOpen={() => setViewing(t)} />
+              <LinkRow key={t.id} title={t.name} value={t.id === chosen ? 'Default' : undefined} onOpen={() => setViewing(t)} />
             ))}
           </SettingsCard>
         </>

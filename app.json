@@ -8,7 +8,7 @@
     "light": "assets/icon-light.svg",
     "dark": "assets/icon-dark.svg"
   },
-  "description": "Hears your meetings on this computer, shows every word as people speak, and writes clear notes when each one ends.",
+  "description": "Hears your meetings and writes clear notes when each one ends.",
   "license": "MIT",
   "categories": [
     "notes",
@@ -166,26 +166,6 @@
           "maxLength": 1000,
           "default": ""
         },
-        "template": {
-          "type": "string",
-          "title": "Meeting type",
-          "enum": [
-            "Auto",
-            "One-on-one",
-            "Stand-up",
-            "Team meeting",
-            "Customer discovery",
-            "Sales call",
-            "Job interview",
-            "User interview",
-            "Sprint planning",
-            "Retrospective",
-            "Investor update",
-            "Pitch",
-            "Class or talk"
-          ],
-          "default": "Auto"
-        },
         "askOnCall": {
           "type": "boolean",
           "title": "Ask to take notes when a call starts",
@@ -226,15 +206,6 @@
           {
             "kind": "property",
             "property": "words"
-          }
-        ]
-      },
-      {
-        "title": "Notes",
-        "items": [
-          {
-            "kind": "property",
-            "property": "template"
           }
         ]
       },
@@ -676,13 +647,35 @@
     {
       "name": "templates",
       "title": "List my meeting types",
-      "description": "The person's own meeting types (note templates).",
+      "description": "The person's own meeting types, and the one new notes follow.",
       "input": {
         "type": "object",
         "properties": {},
         "additionalProperties": false
       },
       "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "set_default_template",
+      "title": "Choose the default meeting type",
+      "description": "Makes a meeting type the one new notes follow.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
       "outbound": false,
       "visibility": [
         "app"
@@ -938,7 +931,7 @@
     {
       "name": "search_meetings",
       "title": "Search meetings",
-      "description": "Searches the notes, the person's notes and the transcripts of all meetings. Answers passages with the meeting's id, title, date and the part they come from. Use it to find which meetings talked about something.",
+      "description": "Searches the notes and the transcripts of all meetings, and answers the passages that match, each with its meeting, its date and the part it comes from.",
       "input": {
         "type": "object",
         "properties": {
@@ -965,7 +958,7 @@
     {
       "name": "list_meetings",
       "title": "List meetings",
-      "description": "Lists meetings, newest first, with id, title, date and length. Narrow it by a date range and words of the title.",
+      "description": "Lists meetings, newest first, with their titles, dates and lengths. Narrows them by dates and by words of the title.",
       "input": {
         "type": "object",
         "properties": {
@@ -991,7 +984,7 @@
     {
       "name": "read_meeting",
       "title": "Read meeting",
-      "description": "Reads one meeting by its id: its notes, the person's own notes, or its transcript with the time and speaker of each line. A long transcript comes in pages: read on from the number in `next`.",
+      "description": "Reads one meeting: its notes, the notes typed in it, or its transcript with who spoke when. A long transcript comes in parts, each answer naming the next.",
       "input": {
         "type": "object",
         "properties": {

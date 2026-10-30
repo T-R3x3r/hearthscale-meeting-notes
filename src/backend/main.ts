@@ -15,7 +15,7 @@
  */
 import type { AppContext, Backend } from '@hearthscale/app';
 import type { Line, Meeting, MeetingState, Side } from '../shared/meeting.ts';
-import { AUTO, TEMPLATES, template, type Template } from '../shared/templates.ts';
+import { AUTO, template, type Template } from '../shared/templates.ts';
 import { BUILT_IN, OWN } from '../shared/requests.ts';
 import { Answers } from './answers.ts';
 import { Files } from './files.ts';
@@ -31,7 +31,6 @@ interface Settings {
   language: string;
   notesLanguage: string;
   words: string;
-  template: string;
   askOnCall: boolean;
   recordOnCall: boolean;
 }
@@ -59,6 +58,8 @@ const LANGUAGES: Record<string, string> = {
 /** How long a recording that a call started goes on after the call
  *  program lets the microphone go, in ms. */
 const CALL_END_MS = 30_000;
+/** The store's key of the meeting type new notes follow. */
+const DEFAULT_TEMPLATE = 'defaultTemplate';
 /** How long after the last line the transcript file is written, in ms. */
 const KEEP_MS = 1000;
 /** How long after the last change of a meeting it goes into the index,
@@ -245,7 +246,7 @@ async function finish(reason?: string): Promise<void> {
     if (control.signal.reason === 'stopped') await settle(meeting.id);
     return;
   }
-  await write(meeting.id, meeting.template ?? defaultTemplate(), control);
+  await write(meeting.id, meeting.template ?? (await defaultTemplate()), control);
 }
 
 /** Starts the work on a meeting; the work under way on it ends as
@@ -286,8 +287,11 @@ async function shapeOf(id: string): Promise<Template> {
   return shape;
 }
 
-function defaultTemplate(): string {
-  return TEMPLATES.find((t) => t.name === settings.template)?.id ?? AUTO;
+/** The meeting type the person chose for new notes; Auto until they
+ *  choose one. The store gives back what any version of the app wrote. */
+async function defaultTemplate(): Promise<string> {
+  const stored = await ctx.store.get(DEFAULT_TEMPLATE);
+  return typeof stored === 'string' ? stored : AUTO;
 }
 
 /** Writes a meeting's notes with a meeting type, as the meeting's work or
@@ -396,7 +400,7 @@ async function transcribe(asset: string, name: string): Promise<Meeting> {
       if (control.signal.reason === 'stopped') await settle(meeting.id);
       return;
     }
-    await write(meeting.id, defaultTemplate(), control);
+    await write(meeting.id, await defaultTemplate(), control);
   })().catch((e) => ctx.log('error', words(e)));
   return meeting;
 }
@@ -641,7 +645,14 @@ const backend: Backend = {
     },
 
     async templates() {
-      return { templates: await files.templates() };
+      return { templates: await files.templates(), default: await defaultTemplate() };
+    },
+
+    async set_default_template(raw) {
+      const { id } = input<{ id: string }>(raw);
+      await shapeOf(id);
+      await ctx.store.set(DEFAULT_TEMPLATE, id);
+      return {};
     },
 
     async save_template(raw) {
@@ -655,6 +666,7 @@ const backend: Backend = {
     async delete_template(raw) {
       const { id } = input<{ id: string }>(raw);
       await files.removeTemplate(id);
+      if ((await defaultTemplate()) === id) await ctx.store.delete(DEFAULT_TEMPLATE);
       return {};
     },
 
