@@ -175,16 +175,22 @@ export function SidePanel({
     };
   }, [host, mode, session, opening]);
 
+  // The slot keeps its chip until the next update, so a conversation that
+  // has begun, or the one about all meetings, clears the chip another
+  // meeting left there.
   useEffect(() => {
-    if (mode !== 'ask' || !session || !fresh || !meeting) return;
+    if (mode !== 'ask' || !session) return;
     void host.call('ui/update-model-context', {
-      content: [
-        {
-          type: 'text',
-          text: `The meeting "${name}", id ${meeting.id}, of ${meeting.created.slice(0, 10)}.`,
-          _meta: { 'openai/title': name },
-        },
-      ],
+      content:
+        fresh && meeting
+          ? [
+              {
+                type: 'text',
+                text: `The meeting "${name}", id ${meeting.id}, of ${meeting.created.slice(0, 10)}.`,
+                _meta: { 'openai/title': name },
+              },
+            ]
+          : [],
       _meta: { 'hearthscale/modelContext': { slot: SLOT } },
     });
   }, [host, mode, session, fresh, meeting, name]);
