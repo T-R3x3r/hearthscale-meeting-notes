@@ -73,22 +73,30 @@ export function TemplatesPage({ host }: { host: Host }) {
               value={editing.about}
               onChange={(e) => setEditing({ ...editing, about: e.target.value })}
             />
-            {editing.sections.map((s, i) => (
-              <div key={i} className="notes-form-row">
-                <TextInput aria-label="Heading" placeholder="Heading" value={s.heading} onChange={(e) => setSection(i, { heading: e.target.value })} />
-                <TextInput
-                  aria-label="What goes in it"
-                  placeholder="What goes in it"
-                  value={s.guide}
-                  onChange={(e) => setSection(i, { guide: e.target.value })}
-                />
-                <IconAction
-                  name="Remove section"
-                  icon="close-line"
-                  onClick={() => setEditing({ ...editing, sections: editing.sections.filter((_, at) => at !== i) })}
-                />
-              </div>
-            ))}
+            <div className="notes-sections">
+              {editing.sections.length > 0 && (
+                <div className="notes-form-row" aria-hidden="true">
+                  <span className="hs-field-label">Heading</span>
+                  <span className="hs-field-label">What goes in it</span>
+                </div>
+              )}
+              {editing.sections.map((s, i) => (
+                <div key={i} className="notes-form-row">
+                  <TextInput aria-label="Heading" placeholder="Heading" value={s.heading} onChange={(e) => setSection(i, { heading: e.target.value })} />
+                  <TextInput
+                    aria-label="What goes in it"
+                    placeholder="What goes in it"
+                    value={s.guide}
+                    onChange={(e) => setSection(i, { guide: e.target.value })}
+                  />
+                  <IconAction
+                    name="Remove section"
+                    icon="close-line"
+                    onClick={() => setEditing({ ...editing, sections: editing.sections.filter((_, at) => at !== i) })}
+                  />
+                </div>
+              ))}
+            </div>
             <div className="notes-form-actions">
               <Button
                 icon={<Icon name="add-line" size={14} />}

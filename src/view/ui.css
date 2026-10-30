@@ -386,9 +386,21 @@ body,
   gap: var(--gap-row);
 }
 
+/* A template's sections: one row of labels, then a row of fields for each
+   section. */
+.notes-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-stack);
+}
+
+.notes-sections .hs-field-label {
+  margin-bottom: 0;
+}
+
 .notes-form-row {
   display: grid;
-  grid-template-columns: 1fr 2fr auto;
+  grid-template-columns: 1fr 2fr var(--icon-ctl-md);
   gap: var(--gap-inline);
   align-items: center;
 }
@@ -424,14 +436,5 @@ body,
   .notes-starters {
     padding-left: var(--gap-row);
     padding-right: var(--gap-row);
-  }
-
-  .notes-form-row {
-    grid-template-columns: 1fr auto;
-  }
-
-  .notes-form-row > :nth-child(2) {
-    grid-column: 1 / -1;
-    grid-row: 2;
   }
 }
