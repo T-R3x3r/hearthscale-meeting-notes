@@ -229,6 +229,15 @@ export function MeetingNotes({
     }
   };
 
+  /** The start page: every meeting's actions, and Ask about all of them. */
+  const home = () => {
+    openId.current = null;
+    setOpen(null);
+    setSection('meetings');
+    setListShown(false);
+  };
+  const atStart = section === 'meetings' && open === null;
+
   const sideShown = wide || listShown;
   const pageShown = wide || !listShown;
   const newTip = tips('new', 'New meeting');
@@ -246,7 +255,13 @@ export function MeetingNotes({
       )}
       {sideShown && (
         <div className="hs-sidebar-column notes-side">
-          <div className="hs-plugrow hs-inktext hs-app-row">
+          <div
+            role="button"
+            tabIndex={0}
+            className={`hs-plugrow hs-inktext hs-app-row${atStart ? ' hs-boxsel' : ''}`}
+            onClick={home}
+            onKeyDown={(e) => e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ') && home()}
+          >
             <span className="hs-sidebar-mark">
               <Icon name="mic-line" size={16} />
             </span>
@@ -257,8 +272,15 @@ export function MeetingNotes({
               tabIndex={0}
               aria-label="New meeting"
               className="hs-tipwrap hs-hovink hs-inkmut hs-sidebar-rowact"
-              onClick={() => void create()}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && void create()}
+              onClick={(e) => {
+                e.stopPropagation();
+                void create();
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.stopPropagation();
+                void create();
+              }}
               {...newTip.hover}
             >
               <span className="hs-sidebar-plus">
