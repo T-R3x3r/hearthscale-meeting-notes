@@ -9,9 +9,12 @@ import { useEffect, useState } from 'react';
 import {
   Button,
   EmptyState,
+  FactRow,
   Icon,
   LinkRow,
   ListRow,
+  MItem,
+  MenuSurface,
   Mono,
   Notice,
   PageTitle,
@@ -20,7 +23,11 @@ import {
   ShellConfirm,
   TextField,
   TextInput,
+  anchorFrom,
+  useFloatingTips,
+  type MenuAnchor,
 } from '@hearthscale/app-ui';
+import type { Meeting } from '../shared/meeting.ts';
 import { TEMPLATES, type Template } from '../shared/templates.ts';
 import { words, type Host } from './host.ts';
 import { IconAction, Page } from './parts.tsx';
@@ -33,11 +40,27 @@ interface Request {
 
 const blankTemplate = (): Template => ({ id: '', name: '', about: '', sections: [{ heading: '', guide: '' }] });
 
-export function TemplatesPage({ host }: { host: Host }) {
+export function TemplatesPage({
+  host,
+  meetings,
+  meetingName,
+  onUse,
+}: {
+  host: Host;
+  /** The meetings whose notes a meeting type can write. */
+  meetings: Meeting[];
+  meetingName: (meeting: Meeting) => string;
+  /** Writes a meeting's notes with a meeting type, and opens the meeting. */
+  onUse: (meeting: string, template: string) => void;
+}) {
   const [own, setOwn] = useState<Template[]>([]);
+  const [viewing, setViewing] = useState<Template | null>(null);
   const [editing, setEditing] = useState<Template | null>(null);
   const [deleting, setDeleting] = useState<Template | null>(null);
+  const [using, setUsing] = useState<MenuAnchor | null>(null);
+  const [writing, setWriting] = useState<Meeting | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const tips = useFloatingTips();
 
   const load = () =>
     void host.tool<{ templates: Template[] }>('templates').then(({ templates }) => setOwn(templates), (e) => setProblem(words(e)));
@@ -48,8 +71,9 @@ export function TemplatesPage({ host }: { host: Host }) {
     setProblem(null);
     try {
       const { id, ...rest } = editing;
-      await host.tool('save_template', id ? editing : rest, 'Save');
+      const { template } = await host.tool<{ template: Template }>('save_template', id ? editing : rest, 'Save');
       setEditing(null);
+      setViewing(template);
       load();
     } catch (e) {
       setProblem(words(e));
@@ -60,13 +84,15 @@ export function TemplatesPage({ host }: { host: Host }) {
     editing &&
     setEditing({ ...editing, sections: editing.sections.map((s, at) => (at === i ? { ...s, ...change } : s)) });
 
+  const mine = viewing !== null && own.some((t) => t.id === viewing.id);
+  const useWhy = tips('use', meetings.length === 0 ? 'Record a meeting first' : undefined);
+
   return (
     <Page>
-      <PageTitle>Meeting types</PageTitle>
-      {problem && <Notice>{problem}</Notice>}
       {editing ? (
         <>
-          <SettingsSection first>{editing.id ? 'Edit meeting type' : 'New meeting type'}</SettingsSection>
+          <PageTitle>{editing.id ? 'Edit meeting type' : 'New meeting type'}</PageTitle>
+          {problem && <Notice>{problem}</Notice>}
           <div className="notes-form">
             <TextField label="Name" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
             <TextField
@@ -107,23 +133,68 @@ export function TemplatesPage({ host }: { host: Host }) {
               </Button>
             </div>
             <div className="notes-form-actions">
-              {editing.id && (
-                <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(editing)}>
-                  Delete meeting type
-                </Button>
-              )}
               <span className="hs-flex-spacer" />
-              <Button onClick={() => setEditing(null)}>
-                Cancel
-              </Button>
+              <Button onClick={() => setEditing(null)}>Cancel</Button>
               <Button variant="primary" disabled={!editing.name.trim()} onClick={() => void save()}>
                 Save
               </Button>
             </div>
           </div>
         </>
+      ) : viewing ? (
+        <>
+          <div className="notes-top">
+            <IconAction name="Meeting types" icon="arrow-left-line" onClick={() => setViewing(null)} />
+            <PageTitle>{viewing.name}</PageTitle>
+          </div>
+          {problem && <Notice>{problem}</Notice>}
+          <SettingsSection first>Description</SettingsSection>
+          <SettingsCard>
+            <ListRow title={viewing.about} />
+          </SettingsCard>
+          <SettingsSection>Sections</SettingsSection>
+          <SettingsCard>
+            {viewing.sections.length > 0 ? (
+              viewing.sections.map((s, i) => <FactRow key={i} label={s.heading} value={s.guide} />)
+            ) : (
+              <ListRow title="Chosen to fit each meeting" />
+            )}
+          </SettingsCard>
+          <div className="notes-form-actions notes-type-actions">
+            {mine && (
+              <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(viewing)}>
+                Delete meeting type
+              </Button>
+            )}
+            <span className="hs-flex-spacer" />
+            <Button
+              icon={<Icon name="file-copy-line" size={14} />}
+              onClick={() => setEditing({ ...viewing, id: '', name: `${viewing.name} copy` })}
+            >
+              Duplicate
+            </Button>
+            {mine && (
+              <Button icon={<Icon name="pencil-line" size={14} />} onClick={() => setEditing(viewing)}>
+                Edit
+              </Button>
+            )}
+            <span className="hs-tipwrap" {...useWhy.hover}>
+              <Button
+                variant="primary"
+                disabled={meetings.length === 0}
+                trailingIcon={<Icon name="arrow-down-s-line" size={14} />}
+                onClick={(e) => setUsing(anchorFrom('use', e))}
+              >
+                Use for a meeting
+              </Button>
+              {useWhy.tip}
+            </span>
+          </div>
+        </>
       ) : (
         <>
+          <PageTitle>Meeting types</PageTitle>
+          {problem && <Notice>{problem}</Notice>}
           <SettingsSection
             first
             action={
@@ -137,17 +208,45 @@ export function TemplatesPage({ host }: { host: Host }) {
           {own.length > 0 && (
             <SettingsCard>
               {own.map((t) => (
-                <LinkRow key={t.id} title={t.name} onOpen={() => setEditing(t)} />
+                <LinkRow key={t.id} title={t.name} onOpen={() => setViewing(t)} />
               ))}
             </SettingsCard>
           )}
           <SettingsSection>Meeting types</SettingsSection>
           <SettingsCard>
             {TEMPLATES.map((t) => (
-              <ListRow key={t.id} title={t.name} />
+              <LinkRow key={t.id} title={t.name} onOpen={() => setViewing(t)} />
             ))}
           </SettingsCard>
         </>
+      )}
+      {using && (
+        <MenuSurface anchor={using} onDismiss={() => setUsing(null)}>
+          {meetings.map((m) => (
+            <MItem
+              key={m.id}
+              label={meetingName(m)}
+              onClick={() => {
+                setUsing(null);
+                setWriting(m);
+              }}
+            />
+          ))}
+        </MenuSurface>
+      )}
+      {writing && viewing && (
+        <ShellConfirm
+          title={`Write new notes for “${meetingName(writing)}”?`}
+          body={null}
+          action="Write notes"
+          tone="primary"
+          onConfirm={() => {
+            const meeting = writing.id;
+            setWriting(null);
+            onUse(meeting, viewing.id);
+          }}
+          onCancel={() => setWriting(null)}
+        />
       )}
       {deleting && (
         <ShellConfirm
@@ -158,7 +257,7 @@ export function TemplatesPage({ host }: { host: Host }) {
           onConfirm={() => {
             const id = deleting.id;
             setDeleting(null);
-            setEditing(null);
+            setViewing(null);
             void host.tool('delete_template', { id }, 'Delete').then(load, (e) => setProblem(words(e)));
           }}
           onCancel={() => setDeleting(null)}

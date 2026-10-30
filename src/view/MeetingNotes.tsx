@@ -335,7 +335,17 @@ export function MeetingNotes({
           </div>
         </div>
       )}
-      {pageShown && section === 'templates' && <TemplatesPage host={host} />}
+      {pageShown && section === 'templates' && (
+        <TemplatesPage
+          host={host}
+          meetings={list}
+          meetingName={(m) => label(m, locale, timeZone)}
+          onUse={(meeting, template) => {
+            void host.tool('write_notes', { id: meeting, template }, 'Write notes').catch((e) => setProblem(words(e)));
+            void show(meeting);
+          }}
+        />
+      )}
       {pageShown && section === 'requests' && <RequestsPage host={host} />}
       {pageShown &&
         section === 'meetings' &&

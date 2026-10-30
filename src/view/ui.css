@@ -419,6 +419,16 @@ body,
   gap: var(--gap-inline);
 }
 
+/* A meeting type's page: its actions under its sections, and its name
+   beside the press back to the list. */
+.notes-type-actions {
+  margin-top: var(--gap-page);
+}
+
+.notes-top > .hs-page-title {
+  margin: 0;
+}
+
 .notes-request-text {
   box-sizing: border-box;
   width: 100%;
