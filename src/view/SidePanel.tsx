@@ -21,6 +21,10 @@ export type PanelMode = 'transcript' | 'ask';
 
 const SLOT = 'ask';
 
+/** The store's key of the Ask conversation of a meeting, or of the one
+ *  about all meetings. */
+export const askKey = (meeting: string | null) => `ask:${meeting ?? 'all'}`;
+
 /** Questions an empty chat about a meeting offers with one press. */
 const STARTERS = [
   { label: 'Catch me up', text: 'What did I miss in this meeting?' },
@@ -66,7 +70,7 @@ export function SidePanel({
   const [fresh, setFresh] = useState(false);
   const [round, setRound] = useState(0);
   const [copied, setCopied] = useState(false);
-  const key = `ask:${meeting?.id ?? 'all'}`;
+  const key = askKey(meeting?.id ?? null);
   const opening = fresh && meeting !== null;
 
   const copy = async () => {

@@ -14,7 +14,7 @@ import { words, type Host } from './host.ts';
 import { MeetingPage, type Opened } from './MeetingPage.tsx';
 import { label } from './format.ts';
 import { forTranscription } from './sound.ts';
-import { SidePanel, type PanelMode } from './SidePanel.tsx';
+import { SidePanel, askKey, type PanelMode } from './SidePanel.tsx';
 import { RequestsPage, TemplatesPage } from './Library.tsx';
 import { IconAction } from './parts.tsx';
 import { ModelNeeds } from './ModelNeeds.tsx';
@@ -245,16 +245,21 @@ export function MeetingNotes({
     }
   };
 
+  /** Deletes a meeting and its Ask conversation. The meeting closes first,
+   *  so its Ask panel does not start a new conversation for it. */
   const remove = async (meeting: Meeting) => {
     setDeleting(null);
+    if (openId.current === meeting.id) {
+      openId.current = null;
+      setOpen(null);
+    }
     try {
+      const key = askKey(meeting.id);
+      const { value: asked } = await host.call('hearthscale/store/get', { key });
+      if (typeof asked === 'string') await host.call('hearthscale/sessions/delete', { id: asked });
+      await host.call('hearthscale/store/delete', { key });
       await host.tool('delete_meeting', { id: meeting.id }, 'Delete');
-      const next = list.filter((m) => m.id !== meeting.id);
-      setList(next);
-      if (openId.current === meeting.id) {
-        openId.current = null;
-        setOpen(null);
-      }
+      setList((l) => l.filter((m) => m.id !== meeting.id));
     } catch (e) {
       setProblem(words(e));
     }
