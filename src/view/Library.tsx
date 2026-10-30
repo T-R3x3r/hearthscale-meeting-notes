@@ -112,7 +112,7 @@ export function TemplatesPage({ host }: { host: Host }) {
                 </Button>
               )}
               <span className="hs-flex-spacer" />
-              <Button variant="ghost" onClick={() => setEditing(null)}>
+              <Button onClick={() => setEditing(null)}>
                 Cancel
               </Button>
               <Button variant="primary" disabled={!editing.name.trim()} onClick={() => void save()}>
@@ -218,7 +218,7 @@ export function RecipesPage({ host }: { host: Host }) {
                 </Button>
               )}
               <span className="hs-flex-spacer" />
-              <Button variant="ghost" onClick={() => setEditing(null)}>
+              <Button onClick={() => setEditing(null)}>
                 Cancel
               </Button>
               <Button variant="primary" disabled={!editing.title.trim() || !editing.text.trim()} onClick={() => void save()}>

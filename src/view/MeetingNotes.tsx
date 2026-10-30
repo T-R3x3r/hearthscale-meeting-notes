@@ -369,7 +369,7 @@ export function MeetingNotes({
                     <Button variant="primary" icon={<Icon name="file-text-line" size={14} />} onClick={() => void transcribe()}>
                       Transcribe
                     </Button>
-                    <Button variant="ghost" onClick={() => setPicked(null)}>
+                    <Button onClick={() => setPicked(null)}>
                       Cancel
                     </Button>
                   </div>
