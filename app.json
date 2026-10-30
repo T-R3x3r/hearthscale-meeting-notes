@@ -22,6 +22,34 @@
   "permissions": [
     "clipboard-write"
   ],
+  "onboarding": {
+    "version": 1,
+    "cards": [
+      {
+        "title": "Notes of every meeting.",
+        "text": "Meeting notes hears your meetings on this computer and writes clear notes when each one ends."
+      },
+      {
+        "title": "What a meeting holds.",
+        "rows": [
+          { "icon": "transcript", "title": "Transcript", "text": "Every word, with who said it and when." },
+          { "icon": "pen", "title": "Notes", "text": "Your own points, and the notes written from the meeting." },
+          { "icon": "view", "title": "Meeting types", "text": "Pick one, and the notes follow its sections." },
+          { "icon": "question", "title": "Ask", "text": "Questions about one meeting, or all of them." },
+          { "icon": "keyboard", "title": "Saved requests", "text": "Requests you make often, in the / menu of Ask." }
+        ]
+      },
+      {
+        "title": "Good for any meeting.",
+        "rows": [
+          { "icon": "clock", "title": "Team meetings", "text": "Decisions and next steps, each with its owner." },
+          { "icon": "speech", "title": "Customer calls", "text": "What the customer needs, in their own words." },
+          { "icon": "search", "title": "Interviews", "text": "Every answer, with its question." },
+          { "icon": "check", "title": "One-on-ones", "text": "Feedback and goals, kept for next time." }
+        ]
+      }
+    ]
+  },
   "uses": [
     "store",
     "events",
