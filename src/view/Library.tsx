@@ -205,14 +205,14 @@ export function TemplatesPage({
           >
             My meeting types
           </SettingsSection>
-          {own.length > 0 && (
-            <SettingsCard>
-              {own.map((t) => (
-                <LinkRow key={t.id} title={t.name} onOpen={() => setViewing(t)} />
-              ))}
-            </SettingsCard>
-          )}
-          <SettingsSection>Meeting types</SettingsSection>
+          <SettingsCard>
+            {own.length > 0 ? (
+              own.map((t) => <LinkRow key={t.id} title={t.name} onOpen={() => setViewing(t)} />)
+            ) : (
+              <ListRow title="No meeting types of your own yet" />
+            )}
+          </SettingsCard>
+          <SettingsSection>Built-in</SettingsSection>
           <SettingsCard>
             {TEMPLATES.map((t) => (
               <LinkRow key={t.id} title={t.name} onOpen={() => setViewing(t)} />

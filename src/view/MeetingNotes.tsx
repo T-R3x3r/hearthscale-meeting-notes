@@ -340,32 +340,37 @@ export function MeetingNotes({
           <div className="notes-library">
             {(
               [
-                ['templates', 'Meeting types', 'layout-2-line'],
-                ['requests', 'Saved requests', 'bookmark-line'],
+                ['templates', 'Meeting types', 'layout-2-line', 'The sections your notes follow'],
+                ['requests', 'Saved requests', 'bookmark-line', 'Requests you use often in Ask'],
               ] as const
-            ).map(([key, name, icon]) => (
-              <div key={key} className="hs-session-slot">
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${section === key ? ' hs-boxsel' : ''}`}
-                  onClick={() => {
-                    setSection(key);
-                    setListShown(false);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key !== 'Enter') return;
-                    setSection(key);
-                    setListShown(false);
-                  }}
-                >
-                  <span className="hs-session-mark">
-                    <Icon name={icon} size={15} />
-                  </span>
-                  <span className="hs-stitle hs-session-label">{name}</span>
+            ).map(([key, name, icon, about]) => {
+              const tip = tips(`library-${key}`, about);
+              return (
+                <div key={key} className="hs-session-slot">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className={`hs-tipwrap hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${section === key ? ' hs-boxsel' : ''}`}
+                    onClick={() => {
+                      setSection(key);
+                      setListShown(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter') return;
+                      setSection(key);
+                      setListShown(false);
+                    }}
+                    {...tip.hover}
+                  >
+                    <span className="hs-session-mark">
+                      <Icon name={icon} size={15} />
+                    </span>
+                    <span className="hs-stitle hs-session-label">{name}</span>
+                    {tip.tip}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
