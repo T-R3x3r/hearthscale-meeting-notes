@@ -212,11 +212,6 @@ body,
   flex: 1;
 }
 
-/* A place in Hearthscale's settings, kept on one line. */
-.notes-path {
-  white-space: nowrap;
-}
-
 /* The work under way after a meeting ends: its status, how long it has
    run, and Stop. */
 .notes-work {

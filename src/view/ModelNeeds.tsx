@@ -1,9 +1,8 @@
 /**
  * What Meeting notes cannot work without: a transcription model to hear a
  * meeting and a chat model to write its notes. When the app can run no
- * model of one of these kinds, one notice says so and names the place
- * where a person chooses the app's models: its page in Hearthscale's
- * settings.
+ * model of one of these kinds, one notice says so, with a link to the
+ * app's page in Hearthscale's settings, where a person chooses its models.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '@hearthscale/app-ui';
@@ -12,11 +11,11 @@ import { words, type Host } from './host.ts';
 /** The notice for the kinds the app has no model of, by which are missing. */
 const need = (transcription: boolean, chat: boolean) =>
   transcription && chat
-    ? 'Meeting notes needs a transcription model and a chat model. Choose them in'
+    ? 'Meeting notes needs a transcription model and a chat model.'
     : transcription
-      ? 'Meeting notes needs a transcription model to hear meetings. Choose one in'
+      ? 'Meeting notes needs a transcription model to hear meetings.'
       : chat
-        ? 'Meeting notes needs a chat model to write notes. Choose one in'
+        ? 'Meeting notes needs a chat model to write notes.'
         : null;
 
 export function ModelNeeds({ host }: { host: Host }) {
@@ -44,9 +43,19 @@ export function ModelNeeds({ host }: { host: Host }) {
       {problem && <Notice>{problem}</Notice>}
       {missing && (
         <Notice>
-          <span>
-            {missing} <span className="notes-path">Settings &gt; Apps &gt; Meeting notes</span>.
-          </span>
+          {missing}{' '}
+          <button
+            type="button"
+            className="hs-link"
+            onClick={() =>
+              // The SDK's method list does not name this method yet.
+              void (host.call as (method: string, params: object) => Promise<unknown>)('hearthscale/ui/open-settings', {}).catch(
+                (e: unknown) => setProblem(words(e)),
+              )
+            }
+          >
+            Settings
+          </button>
         </Notice>
       )}
     </>
