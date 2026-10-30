@@ -28,7 +28,8 @@ const OPENING = 'ask-opening';
  *  about all meetings. */
 export const askKey = (meeting: string | null) => `ask:${meeting ?? 'all'}`;
 
-/** Questions an empty chat about a meeting offers with one press. */
+/** Questions an empty chat about a meeting with a transcript or notes
+ *  offers with one press. */
 const STARTERS = [
   { label: 'Catch me up', text: 'What did I miss in this meeting?' },
   { label: 'List the next steps', text: 'List the next steps of this meeting.' },
@@ -43,6 +44,7 @@ export function SidePanel({
   meeting,
   name,
   lines,
+  written,
   partial,
   me,
   focus,
@@ -59,6 +61,8 @@ export function SidePanel({
   /** The open meeting's name as the person reads it. */
   name: string;
   lines: Line[];
+  /** Whether the open meeting holds notes, written or the person's own. */
+  written: boolean;
   partial: Record<Side, string>;
   me: string;
   focus: number | null;
@@ -241,13 +245,15 @@ export function SidePanel({
         <div ref={place} className="notes-ask" data-opening={opening ? 'true' : undefined}>
           {opening && (
             <>
-              <div className="notes-starters">
-                {STARTERS.map((s) => (
-                  <Button key={s.label} size="sm" onClick={() => void ask(s.text)}>
-                    {s.label}
-                  </Button>
-                ))}
-              </div>
+              {(lines.length > 0 || written) && (
+                <div className="notes-starters">
+                  {STARTERS.map((s) => (
+                    <Button key={s.label} size="sm" onClick={() => void ask(s.text)}>
+                      {s.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
               <div ref={room} className="notes-compose-room" style={composer === null ? undefined : { height: composer }} />
             </>
           )}

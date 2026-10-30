@@ -501,6 +501,7 @@ export function MeetingNotes({
           meeting={open?.meeting ?? null}
           name={open ? label(open.meeting, locale, timeZone) : ''}
           lines={open?.lines ?? []}
+          written={open !== null && (open.notes.length > 0 || open.mine.length > 0)}
           partial={live && live.meeting === open?.meeting.id ? partial : { me: '', them: '' }}
           me={me}
           focus={focus}
