@@ -19,7 +19,6 @@ import {
   SettingsCard,
   SettingsSection,
   ShellConfirm,
-  TextField,
   TextInput,
   anchorFrom,
   useFloatingTips,
@@ -29,8 +28,7 @@ import type { Meeting } from '../shared/meeting.ts';
 import { TEMPLATES, type Template } from '../shared/templates.ts';
 import { BUILT_IN, OWN, type Request } from '../shared/requests.ts';
 import { words, type Host } from './host.ts';
-import { IconAction, Page } from './parts.tsx';
-
+import { Field, IconAction, Page } from './parts.tsx';
 
 const blankTemplate = (): Template => ({ id: '', name: '', about: '', sections: [{ heading: '', guide: '' }] });
 
@@ -88,13 +86,15 @@ export function TemplatesPage({
           <PageTitle>{editing.id ? 'Edit meeting type' : 'New meeting type'}</PageTitle>
           {problem && <Notice>{problem}</Notice>}
           <div className="notes-form">
-            <TextField
+            <Field
+              id="type-name"
               label="Name"
               placeholder="Board meeting"
               value={editing.name}
               onChange={(e) => setEditing({ ...editing, name: e.target.value })}
             />
-            <TextField
+            <Field
+              id="type-about"
               label="Description"
               placeholder="A company reports to its board"
               value={editing.about}
@@ -307,7 +307,8 @@ export function RequestsPage({ host }: { host: Host }) {
           <PageTitle>{editing.name ? 'Edit request' : 'New request'}</PageTitle>
           {problem && <Notice>{problem}</Notice>}
           <div className="notes-form">
-            <TextField
+            <Field
+              id="request-name"
               label="Name"
               placeholder="Board summary"
               value={editing.title}
@@ -319,7 +320,7 @@ export function RequestsPage({ host }: { host: Host }) {
               </label>
               <textarea
                 id="request-text"
-                className="hs-field-input notes-request-text"
+                className="hs-input notes-request-text"
                 placeholder="Sum up the decisions and the open questions for the board"
                 value={editing.text}
                 onChange={(e) => setEditing({ ...editing, text: e.target.value })}

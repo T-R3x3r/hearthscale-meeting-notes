@@ -1,10 +1,10 @@
 /**
  * Small parts the view's screens share: an icon button that names its
- * action in a tooltip, and a page in the tab with the inset and reading
- * column of Hearthscale's settings pages.
+ * action in a tooltip, a labelled field, and a page in the tab with the
+ * inset and reading column of Hearthscale's settings pages.
  */
 import { useState, type ComponentProps, type MouseEvent, type ReactNode } from 'react';
-import { Icon, IconButton, useFloatingTips } from '@hearthscale/app-ui';
+import { Icon, IconButton, TextInput, useFloatingTips } from '@hearthscale/app-ui';
 
 export function IconAction({
   name,
@@ -46,6 +46,19 @@ export function IconAction({
       </IconButton>
       {tip.tip}
     </span>
+  );
+}
+
+/** A one-line field under its label, at the height of every field of the
+ *  app's forms. */
+export function Field({ id, label, ...rest }: { id: string; label: string } & ComponentProps<typeof TextInput>) {
+  return (
+    <div className="hs-text-field">
+      <label htmlFor={id} className="hs-field-label">
+        {label}
+      </label>
+      <TextInput id={id} {...rest} />
+    </div>
   );
 }
 

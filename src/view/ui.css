@@ -474,12 +474,14 @@ body,
   margin: 0;
 }
 
+/* A request's text: the box and type of the form's other fields, over
+   several lines. */
 .notes-request-text {
-  box-sizing: border-box;
   display: block;
+  height: auto;
   min-height: calc(var(--space) * 60);
+  padding-block: calc(var(--space) * 2);
   resize: vertical;
-  font-family: var(--font-app);
   line-height: var(--lh-body);
 }
 
