@@ -133,6 +133,13 @@ export function MeetingPage({
   const seconds = live ? live.seconds + (live.since ? (now - live.since) / 1000 : 0) : meeting.seconds;
   const busy = BUSY.includes(meeting.state);
   const hasNotes = opened.notes.length > 0 || busy || meeting.failed !== undefined;
+  /** Notes can be written from the transcript or the person's own notes
+   *  while the app does no other work on the meeting. */
+  const canWrite = !busy && !live && (opened.lines.length > 0 || opened.mine.length > 0);
+  const write = (template: string) => {
+    setTab('notes');
+    act('write_notes', 'Write notes', { id: meeting.id, template });
+  };
   const elapsed = meeting.since ? Math.max(0, (now - Date.parse(meeting.since)) / 1000) : 0;
 
   const onNotesClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -309,17 +316,19 @@ export function MeetingPage({
               </Notice>
             )}
 
-            {hasNotes && (
+            {(hasNotes || canWrite) && (
               <div className="notes-tabs">
-                <SegmentedControl
-                  label="Notes"
-                  value={tab}
-                  options={[
-                    { value: 'notes', label: 'Notes' },
-                    { value: 'mine', label: 'My notes' },
-                  ]}
-                  onChange={setTab}
-                />
+                {hasNotes && (
+                  <SegmentedControl
+                    label="Notes"
+                    value={tab}
+                    options={[
+                      { value: 'notes', label: 'Notes' },
+                      { value: 'mine', label: 'My notes' },
+                    ]}
+                    onChange={setTab}
+                  />
+                )}
                 <span className="hs-flex-spacer" />
                 {busy && (
                   <span className="notes-work">
@@ -337,9 +346,9 @@ export function MeetingPage({
                     </Button>
                   </span>
                 )}
-                {!busy && !live && (opened.lines.length > 0 || opened.mine) && (
+                {canWrite && (
                   <Button
-                    icon={<Icon name="refresh-line" size={14} />}
+                    icon={<Icon name={opened.notes ? 'refresh-line' : 'quill-pen-line'} size={14} />}
                     trailingIcon={<Icon name="arrow-down-s-line" size={14} />}
                     onClick={(e) => {
                       const anchor = anchorFrom('again', e);
@@ -348,7 +357,7 @@ export function MeetingPage({
                         .then(({ templates }) => setMenu({ anchor, own: templates }), fail);
                     }}
                   >
-                    Write again
+                    {opened.notes ? 'Write again' : 'Write notes'}
                   </Button>
                 )}
               </div>
@@ -432,7 +441,8 @@ export function MeetingPage({
                 checked={t.id === (meeting.template ?? 'auto')}
                 onClick={() => {
                   setMenu(null);
-                  setAgain(t.id);
+                  if (opened.notes) setAgain(t.id);
+                  else write(t.id);
                 }}
               />
             ),
@@ -448,8 +458,7 @@ export function MeetingPage({
           onConfirm={() => {
             const chosen = again;
             setAgain(null);
-            setTab('notes');
-            act('write_notes', 'Write again', { id: meeting.id, template: chosen });
+            write(chosen);
           }}
           onCancel={() => setAgain(null)}
         />
