@@ -431,11 +431,10 @@ body,
 
 .notes-request-text {
   box-sizing: border-box;
-  width: 100%;
+  display: block;
   min-height: calc(var(--space) * 60);
   resize: vertical;
   font-family: var(--font-app);
-  font-size: var(--fs-body);
   line-height: var(--lh-body);
 }
 

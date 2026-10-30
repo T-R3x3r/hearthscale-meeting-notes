@@ -94,9 +94,15 @@ export function TemplatesPage({
           <PageTitle>{editing.id ? 'Edit meeting type' : 'New meeting type'}</PageTitle>
           {problem && <Notice>{problem}</Notice>}
           <div className="notes-form">
-            <TextField label="Name" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
             <TextField
-              label="Meeting it suits"
+              label="Name"
+              placeholder="Board meeting"
+              value={editing.name}
+              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+            />
+            <TextField
+              label="Description"
+              placeholder="A company reports to its board"
               value={editing.about}
               onChange={(e) => setEditing({ ...editing, about: e.target.value })}
             />
@@ -104,15 +110,15 @@ export function TemplatesPage({
               {editing.sections.length > 0 && (
                 <div className="notes-form-row" aria-hidden="true">
                   <span className="hs-field-label">Heading</span>
-                  <span className="hs-field-label">What goes in it</span>
+                  <span className="hs-field-label">Section notes</span>
                 </div>
               )}
               {editing.sections.map((s, i) => (
                 <div key={i} className="notes-form-row">
-                  <TextInput aria-label="Heading" placeholder="Heading" value={s.heading} onChange={(e) => setSection(i, { heading: e.target.value })} />
+                  <TextInput aria-label="Heading" placeholder="Decisions" value={s.heading} onChange={(e) => setSection(i, { heading: e.target.value })} />
                   <TextInput
-                    aria-label="What goes in it"
-                    placeholder="What goes in it"
+                    aria-label="Section notes"
+                    placeholder="What was agreed, and who owns it"
                     value={s.guide}
                     onChange={(e) => setSection(i, { guide: e.target.value })}
                   />
@@ -297,20 +303,29 @@ export function RequestsPage({ host }: { host: Host }) {
 
   return (
     <Page>
-      <PageTitle>Saved requests</PageTitle>
+      <PageTitle>{editing ? (editing.name ? 'Edit request' : 'New request') : 'Saved requests'}</PageTitle>
       {problem && <Notice>{problem}</Notice>}
       {editing ? (
         <>
-          <SettingsSection first>{editing.name ? 'Edit request' : 'New request'}</SettingsSection>
           <div className="notes-form">
-            <TextField label="Name" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
-            <textarea
-              className="hs-in notes-request-text"
-              aria-label="What the assistant does"
-              placeholder="What the assistant does"
-              value={editing.text}
-              onChange={(e) => setEditing({ ...editing, text: e.target.value })}
+            <TextField
+              label="Name"
+              placeholder="Board summary"
+              value={editing.title}
+              onChange={(e) => setEditing({ ...editing, title: e.target.value })}
             />
+            <div className="hs-text-field">
+              <label htmlFor="request-text" className="hs-field-label">
+                Request
+              </label>
+              <textarea
+                id="request-text"
+                className="hs-field-input notes-request-text"
+                placeholder="Sum up the decisions and the open questions for the board"
+                value={editing.text}
+                onChange={(e) => setEditing({ ...editing, text: e.target.value })}
+              />
+            </div>
             <div className="notes-form-actions">
               {editing.name && (
                 <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(editing)}>
