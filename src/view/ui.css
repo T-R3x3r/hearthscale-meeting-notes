@@ -54,6 +54,19 @@ body,
   padding: 0 var(--space);
 }
 
+/* The search over the meetings, between the app's row and the list, at
+   the list's inset and step. */
+.notes-search {
+  flex: none;
+  padding: calc(var(--space) * 1.25) var(--pad-sidebar) calc(var(--space) * 1.25) 0;
+}
+
+.notes-list-empty {
+  padding: 0 var(--space);
+  color: var(--mut);
+  font-size: var(--fs-sm);
+}
+
 /* The rows under the meetings keep the inset and the step of the
    meetings' list. */
 .notes-library {

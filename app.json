@@ -305,6 +305,29 @@
       ]
     },
     {
+      "name": "find_meetings",
+      "title": "Filter meetings",
+      "description": "The meetings whose title, notes or transcript hold every word of a query.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
       "name": "new_meeting",
       "title": "New meeting",
       "description": "Makes a new meeting with no recording.",

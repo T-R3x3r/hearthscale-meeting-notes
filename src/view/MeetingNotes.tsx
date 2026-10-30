@@ -7,7 +7,7 @@
  * one, and again when its notes are written or changed.
  */
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Button, EmptyState, Icon, Notice, ShellConfirm, Toast, useFloatingTips } from '@hearthscale/app-ui';
+import { Button, EmptyState, Icon, Notice, SettingsSearch, ShellConfirm, Toast, useFloatingTips } from '@hearthscale/app-ui';
 import { BUSY, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
@@ -21,6 +21,9 @@ import { ModelNeeds } from './ModelNeeds.tsx';
 
 /** The narrowest tab that shows the list beside the meeting. */
 const WIDE = 640;
+
+/** How long after the last keystroke the search runs, in ms. */
+const SEARCH_MS = 200;
 
 /** Whether a key on a row presses it, as Enter and Space press a button;
  *  keys on a control inside the row stay that control's. */
@@ -63,6 +66,8 @@ export function MeetingNotes({
   const [focus, setFocus] = useState<number | null>(null);
   const [wide, setWide] = useState(true);
   const [listShown, setListShown] = useState(false);
+  const [query, setQuery] = useState('');
+  const [found, setFound] = useState<string[] | null>(null);
   const root = useRef<HTMLDivElement | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
   const openId = useRef<string | null>(null);
@@ -146,6 +151,23 @@ export function MeetingNotes({
     ];
     return () => offs.forEach((off) => off());
   }, [host, refresh, reload, show]);
+
+  useEffect(() => {
+    const asked = query.trim();
+    if (!asked) {
+      setFound(null);
+      return;
+    }
+    const timer = window.setTimeout(
+      () =>
+        void host
+          .tool<{ ids: string[] }>('find_meetings', { query: asked }, 'Search')
+          .then(({ ids }) => setFound(ids), (e) => setProblem(words(e))),
+      SEARCH_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [host, query, list]);
+  const shown = found === null ? list : list.filter((m) => found.includes(m.id));
 
   const tabTitle =
     section === 'templates'
@@ -285,8 +307,12 @@ export function MeetingNotes({
               }}
             />
           </div>
+          <div className="notes-search">
+            <SettingsSearch value={query} placeholder="Search meetings" onChange={setQuery} />
+          </div>
           <div className="hs-scroll hs-sidebar-scroll notes-list">
-            {list.map((meeting) => (
+            {found !== null && shown.length === 0 && <span className="notes-list-empty">No meetings found</span>}
+            {shown.map((meeting) => (
               <div key={meeting.id} className="hs-session-slot">
                 <div
                   role="button"

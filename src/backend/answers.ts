@@ -100,6 +100,25 @@ export class Answers {
     return `[${shortClock(l.start)}] ${speakerName(l, meeting, this.me())}: ${l.text}`;
   }
 
+  /** The meetings whose title, notes, own notes or transcript hold every
+   *  word of the query. */
+  async find(query: string) {
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const ids: string[] = [];
+    for (const m of await this.files.list()) {
+      const text = [
+        m.title,
+        plain(await this.files.notes(m.id)),
+        plain(await this.files.mine(m.id)),
+        ...(await this.files.lines(m.id)).map((l) => l.text),
+      ]
+        .join('\n')
+        .toLowerCase();
+      if (words.every((w) => text.includes(w))) ids.push(m.id);
+    }
+    return { ids };
+  }
+
   /** The meetings whose titles hold the typed words, for the `@` list. */
   async mentions(query: string) {
     const lower = query.toLowerCase();

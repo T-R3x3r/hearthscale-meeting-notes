@@ -522,6 +522,11 @@ const backend: Backend = {
       return { saved: true };
     },
 
+    async find_meetings(raw) {
+      const { query } = input<{ query: string }>(raw);
+      return answers.find(query);
+    },
+
     async mention_meetings(raw) {
       const { query } = input<{ query: string }>(raw);
       return answers.mentions(query);
