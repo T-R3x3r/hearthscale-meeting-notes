@@ -47,12 +47,7 @@ export function ModelNeeds({ host }: { host: Host }) {
           <button
             type="button"
             className="hs-link"
-            onClick={() =>
-              // The SDK's method list does not name this method yet.
-              void (host.call as (method: string, params: object) => Promise<unknown>)('hearthscale/ui/open-settings', {}).catch(
-                (e: unknown) => setProblem(words(e)),
-              )
-            }
+            onClick={() => void host.call('hearthscale/ui/open-settings', {}).catch((e) => setProblem(words(e)))}
           >
             Settings
           </button>
