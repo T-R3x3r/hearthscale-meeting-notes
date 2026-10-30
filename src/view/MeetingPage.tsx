@@ -22,11 +22,11 @@ import {
   type MenuAnchor,
 } from '@hearthscale/app-ui';
 import { RichTextEditor } from '@hearthscale/app-ui/editor';
-import { BUSY, quoteSeconds, shortClock, type Line, type Meeting, type MeetingState } from '../shared/meeting.ts';
+import { BUSY, quoteSeconds, shortClock, type Line, type Meeting } from '../shared/meeting.ts';
 import { TEMPLATES, type Template } from '../shared/templates.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
-import { exported, label, plainNotes, when } from './format.ts';
+import { STEPS, exported, label, plainNotes, when } from './format.ts';
 import type { Levels } from './MeetingNotes.tsx';
 import { ModelNeeds } from './ModelNeeds.tsx';
 import { IconAction } from './parts.tsx';
@@ -41,13 +41,6 @@ export interface Opened {
   lines: Line[];
   version: number;
 }
-
-/** What the app does after a meeting ends, as its status says it. */
-const STEPS: Partial<Record<MeetingState, string>> = {
-  transcribing: 'Transcribing…',
-  speakers: 'Finding speakers…',
-  writing: 'Writing notes…',
-};
 
 /** How long after the last keystroke a change is kept. */
 const KEEP_MS = 500;

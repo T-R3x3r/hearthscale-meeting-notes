@@ -26,6 +26,7 @@ import {
 import type { Meeting } from '../shared/meeting.ts';
 import { TEMPLATES, type Template } from '../shared/templates.ts';
 import { BUILT_IN, OWN, type Request } from '../shared/requests.ts';
+import { STEPS } from './format.ts';
 import { words, type Host } from './host.ts';
 import { Back, Field, IconAction, Page } from './parts.tsx';
 
@@ -237,16 +238,22 @@ export function TemplatesPage({
       )}
       {using && (
         <MenuSurface anchor={using} onDismiss={() => setUsing(null)}>
-          {meetings.map((m) => (
-            <MItem
-              key={m.id}
-              label={meetingName(m)}
-              onClick={() => {
-                setUsing(null);
-                setWriting(m);
-              }}
-            />
-          ))}
+          {meetings.map((m) => {
+            const busy = tips(`use-${m.id}`, STEPS[m.state]);
+            return (
+              <span key={m.id} className="hs-tipwrap" {...busy.hover}>
+                <MItem
+                  label={meetingName(m)}
+                  disabled={STEPS[m.state] !== undefined}
+                  onClick={() => {
+                    setUsing(null);
+                    setWriting(m);
+                  }}
+                />
+                {busy.tip}
+              </span>
+            );
+          })}
         </MenuSurface>
       )}
       {writing && viewing && (

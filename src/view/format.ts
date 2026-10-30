@@ -1,8 +1,15 @@
 /**
- * Dates and lengths the way the person reads them, in the locale and time
- * zone of the computer they use.
+ * Dates, lengths and states the way the person reads them, in the locale
+ * and time zone of the computer they use.
  */
-import { shortClock, speakerName, type Line, type Meeting } from '../shared/meeting.ts';
+import { shortClock, speakerName, type Line, type Meeting, type MeetingState } from '../shared/meeting.ts';
+
+/** What the app does after a meeting ends, as its status says it. */
+export const STEPS: Partial<Record<MeetingState, string>> = {
+  transcribing: 'Transcribing…',
+  speakers: 'Finding speakers…',
+  writing: 'Writing notes…',
+};
 
 /** When a meeting was made, such as "30 Oct, 14:05". */
 export function when(iso: string, locale: string, timeZone: string): string {
