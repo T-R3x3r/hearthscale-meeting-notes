@@ -186,7 +186,7 @@ export function MeetingPage({
   return (
     <>
       <div className="hs-scroll hs-settings-scroll notes-page">
-        <main className="notes-sheet">
+        <main className="hs-settings-content notes-sheet">
           <header className="notes-head">
             <div className="notes-top">
               <input

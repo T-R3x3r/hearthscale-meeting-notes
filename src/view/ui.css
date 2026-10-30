@@ -93,14 +93,8 @@ body,
   font-size: var(--fs-md);
 }
 
-/* A meeting's column: the reading width of Hearthscale's pages, under the
-   window's own hover plates, which a settings page's content changes. */
+/* A meeting's page: its blocks a page's gap apart. */
 .notes-sheet {
-  width: 100%;
-  max-width: var(--content-width);
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
   gap: var(--gap-page);
 }
 
@@ -177,14 +171,6 @@ body,
 
 .notes-level > .hs-meter {
   flex: 1;
-}
-
-/* A segmented control as wide as its longest choice: equal columns that
-   each fit the longest label, so no label runs out of its option. */
-.notes .hs-segmented {
-  display: grid;
-  grid-auto-columns: 1fr;
-  grid-auto-flow: column;
 }
 
 .notes-tabs {
