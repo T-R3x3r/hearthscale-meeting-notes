@@ -144,7 +144,7 @@
         },
         "template": {
           "type": "string",
-          "title": "Default template",
+          "title": "Meeting type",
           "enum": [
             "Auto",
             "One-on-one",
@@ -553,8 +553,8 @@
     },
     {
       "name": "templates",
-      "title": "Templates",
-      "description": "The person's own templates.",
+      "title": "My meeting types",
+      "description": "The person's own meeting types (note templates).",
       "input": {
         "type": "object",
         "properties": {},
@@ -568,8 +568,8 @@
     },
     {
       "name": "save_template",
-      "title": "Save template",
-      "description": "Keeps a template of the person's own: its name, what kind of meeting it suits, and its sections.",
+      "title": "Save meeting type",
+      "description": "Keeps a meeting type (note template) of the person's own: its name, the meetings it suits, and its sections.",
       "input": {
         "type": "object",
         "properties": {
@@ -623,8 +623,8 @@
     },
     {
       "name": "delete_template",
-      "title": "Delete template",
-      "description": "Deletes a template of the person's own.",
+      "title": "Delete meeting type",
+      "description": "Deletes a meeting type of the person's own.",
       "input": {
         "type": "object",
         "properties": {
@@ -644,9 +644,9 @@
       ]
     },
     {
-      "name": "recipes",
-      "title": "Recipes",
-      "description": "The person's own recipes.",
+      "name": "requests",
+      "title": "Saved requests",
+      "description": "The person's own saved requests.",
       "input": {
         "type": "object",
         "properties": {},
@@ -659,9 +659,9 @@
       ]
     },
     {
-      "name": "save_recipe",
-      "title": "Save recipe",
-      "description": "Keeps a recipe of the person's own, which the assistant's / menu then lists.",
+      "name": "save_request",
+      "title": "Save request",
+      "description": "Keeps a saved request of the person's own, which the assistant's / menu then lists.",
       "input": {
         "type": "object",
         "properties": {
@@ -692,9 +692,9 @@
       ]
     },
     {
-      "name": "delete_recipe",
-      "title": "Delete recipe",
-      "description": "Deletes a recipe of the person's own.",
+      "name": "delete_request",
+      "title": "Delete request",
+      "description": "Deletes a saved request of the person's own.",
       "input": {
         "type": "object",
         "properties": {
@@ -768,7 +768,7 @@
     {
       "name": "write_notes",
       "title": "Write notes",
-      "description": "Writes a meeting's notes again with a template.",
+      "description": "Writes a meeting's notes again with a meeting type, by its template id.",
       "input": {
         "type": "object",
         "properties": {

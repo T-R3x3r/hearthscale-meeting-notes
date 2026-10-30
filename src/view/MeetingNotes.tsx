@@ -15,7 +15,7 @@ import { MeetingPage, type Opened } from './MeetingPage.tsx';
 import { label } from './format.ts';
 import { forTranscription } from './sound.ts';
 import { SidePanel, type PanelMode } from './SidePanel.tsx';
-import { RecipesPage, TemplatesPage } from './Library.tsx';
+import { RequestsPage, TemplatesPage } from './Library.tsx';
 import { IconAction } from './parts.tsx';
 import { ModelNeeds } from './ModelNeeds.tsx';
 
@@ -50,7 +50,7 @@ export function MeetingNotes({
   const [picked, setPicked] = useState<{ name: string; asset: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [panel, setPanel] = useState<PanelMode | null>(first.live ? 'transcript' : null);
-  const [section, setSection] = useState<'meetings' | 'templates' | 'recipes'>('meetings');
+  const [section, setSection] = useState<'meetings' | 'templates' | 'requests'>('meetings');
   const [focus, setFocus] = useState<number | null>(null);
   const [wide, setWide] = useState(true);
   const [listShown, setListShown] = useState(false);
@@ -129,9 +129,9 @@ export function MeetingNotes({
 
   const tabTitle =
     section === 'templates'
-      ? 'Templates'
-      : section === 'recipes'
-        ? 'Recipes'
+      ? 'Meeting types'
+      : section === 'requests'
+        ? 'Saved requests'
         : open
           ? label(open.meeting, locale, timeZone)
           : 'Meeting notes';
@@ -306,8 +306,8 @@ export function MeetingNotes({
           <div className="notes-library">
             {(
               [
-                ['templates', 'Templates', 'layout-2-line'],
-                ['recipes', 'Recipes', 'quill-pen-line'],
+                ['templates', 'Meeting types', 'layout-2-line'],
+                ['requests', 'Saved requests', 'bookmark-line'],
               ] as const
             ).map(([key, name, icon]) => (
               <div key={key} className="hs-session-slot">
@@ -336,7 +336,7 @@ export function MeetingNotes({
         </div>
       )}
       {pageShown && section === 'templates' && <TemplatesPage host={host} />}
-      {pageShown && section === 'recipes' && <RecipesPage host={host} />}
+      {pageShown && section === 'requests' && <RequestsPage host={host} />}
       {pageShown &&
         section === 'meetings' &&
         (open ? (

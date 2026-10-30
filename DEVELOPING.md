@@ -11,10 +11,10 @@ Meeting notes is an ordinary Hearthscale app, built only on the platform's docum
 | `app.json` | The manifest. |
 | `backend.ts` | The backend's entry; `hearthscale dev` and `pack` bundle it with `src/backend` and `src/shared`. |
 | `src/backend/` | The backend: the meeting files, the recording, the speakers, the notes writer, and what the assistant reads. |
-| `src/shared/` | What the backend and the view share: the meeting files' form and the templates. |
+| `src/shared/` | What the backend and the view share: the meeting files' form and the meeting types (note templates). |
 | `src/view/` | The view, React on the kit's parts (`@hearthscale/app-ui`). |
 | `views/meeting-notes.js` | The view's build, the one file the package carries for it, committed with every change to `src/view`. |
-| `prompt/`, `skills/` | The assistant's instructions and its built-in recipes. |
+| `prompt/`, `skills/` | The assistant's instructions and its built-in saved requests. |
 
 ## Build
 

@@ -550,26 +550,26 @@ const backend: Backend = {
       return {};
     },
 
-    async recipes() {
-      return { recipes: (await ctx.skills!.list()).map((r) => ({ name: r.name, title: r.title, text: r.body })) };
+    async requests() {
+      return { requests: (await ctx.skills!.list()).map((r) => ({ name: r.name, title: r.title, text: r.body })) };
     },
 
-    async save_recipe(raw) {
+    async save_request(raw) {
       const { name, title, text } = input<{ name?: string; title: string; text: string }>(raw);
       const words = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      if (!words) throw new Error('A recipe needs a name with letters or digits.');
+      if (!words) throw new Error('A saved request needs a name with letters or digits.');
       const slug = `my-${words}`.slice(0, 64);
       if (name && name !== slug) await ctx.skills!.remove(name);
       await ctx.skills!.add({
         name: slug,
         title: title.trim(),
-        description: `Use when the person asks for their recipe "${title.trim()}".`,
+        description: `Use when the person asks for their saved request "${title.trim()}".`,
         body: text.trim(),
       });
       return { name: slug };
     },
 
-    async delete_recipe(raw) {
+    async delete_request(raw) {
       const { name } = input<{ name: string }>(raw);
       await ctx.skills!.remove(name);
       return {};

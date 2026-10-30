@@ -1,8 +1,9 @@
 /**
- * The person's own templates and recipes. A template names the meeting it
- * suits and its sections, each with a line that says what goes in it; the
- * notes of a meeting can be written with it. A recipe is a request the
- * assistant runs on a meeting or on all of them, listed in its `/` menu.
+ * Meeting types and saved requests. A meeting type names the meetings it
+ * suits and the sections a meeting's notes are written under; the app has
+ * its own, and the person writes more. A saved request is a request to the
+ * assistant the person sends often, on a meeting or on all of them, listed
+ * in the assistant's `/` menu.
  */
 import { useEffect, useState } from 'react';
 import {
@@ -24,7 +25,7 @@ import { TEMPLATES, type Template } from '../shared/templates.ts';
 import { words, type Host } from './host.ts';
 import { IconAction, Page } from './parts.tsx';
 
-interface Recipe {
+interface Request {
   name: string;
   title: string;
   text: string;
@@ -61,11 +62,11 @@ export function TemplatesPage({ host }: { host: Host }) {
 
   return (
     <Page>
-      <PageTitle>Templates</PageTitle>
+      <PageTitle>Meeting types</PageTitle>
       {problem && <Notice>{problem}</Notice>}
       {editing ? (
         <>
-          <SettingsSection first>{editing.id ? 'Edit template' : 'New template'}</SettingsSection>
+          <SettingsSection first>{editing.id ? 'Edit meeting type' : 'New meeting type'}</SettingsSection>
           <div className="notes-form">
             <TextField label="Name" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
             <TextField
@@ -108,7 +109,7 @@ export function TemplatesPage({ host }: { host: Host }) {
             <div className="notes-form-actions">
               {editing.id && (
                 <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(editing)}>
-                  Delete template
+                  Delete meeting type
                 </Button>
               )}
               <span className="hs-flex-spacer" />
@@ -127,11 +128,11 @@ export function TemplatesPage({ host }: { host: Host }) {
             first
             action={
               <Button size="sm" icon={<Icon name="add-line" size={14} />} onClick={() => setEditing(blankTemplate())}>
-                New template
+                New meeting type
               </Button>
             }
           >
-            Your templates
+            My meeting types
           </SettingsSection>
           {own.length > 0 && (
             <SettingsCard>
@@ -140,7 +141,7 @@ export function TemplatesPage({ host }: { host: Host }) {
               ))}
             </SettingsCard>
           )}
-          <SettingsSection>Built in</SettingsSection>
+          <SettingsSection>Meeting types</SettingsSection>
           <SettingsCard>
             {TEMPLATES.map((t) => (
               <ListRow key={t.id} title={t.name} />
@@ -167,14 +168,14 @@ export function TemplatesPage({ host }: { host: Host }) {
   );
 }
 
-export function RecipesPage({ host }: { host: Host }) {
-  const [own, setOwn] = useState<Recipe[]>([]);
-  const [editing, setEditing] = useState<Recipe | null>(null);
-  const [deleting, setDeleting] = useState<Recipe | null>(null);
+export function RequestsPage({ host }: { host: Host }) {
+  const [own, setOwn] = useState<Request[]>([]);
+  const [editing, setEditing] = useState<Request | null>(null);
+  const [deleting, setDeleting] = useState<Request | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
   const load = () =>
-    void host.tool<{ recipes: Recipe[] }>('recipes').then(({ recipes }) => setOwn(recipes), (e) => setProblem(words(e)));
+    void host.tool<{ requests: Request[] }>('requests').then(({ requests }) => setOwn(requests), (e) => setProblem(words(e)));
   useEffect(load, [host]);
 
   const save = async () => {
@@ -182,7 +183,7 @@ export function RecipesPage({ host }: { host: Host }) {
     setProblem(null);
     try {
       await host.tool(
-        'save_recipe',
+        'save_request',
         { ...(editing.name && { name: editing.name }), title: editing.title, text: editing.text },
         'Save',
       );
@@ -197,15 +198,15 @@ export function RecipesPage({ host }: { host: Host }) {
 
   return (
     <Page>
-      <PageTitle>Recipes</PageTitle>
+      <PageTitle>Saved requests</PageTitle>
       {problem && <Notice>{problem}</Notice>}
       {editing ? (
         <>
-          <SettingsSection first>{editing.name ? 'Edit recipe' : 'New recipe'}</SettingsSection>
+          <SettingsSection first>{editing.name ? 'Edit request' : 'New request'}</SettingsSection>
           <div className="notes-form">
             <TextField label="Name" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
             <textarea
-              className="hs-in notes-recipe-text"
+              className="hs-in notes-request-text"
               aria-label="What the assistant does"
               placeholder="What the assistant does"
               value={editing.text}
@@ -214,7 +215,7 @@ export function RecipesPage({ host }: { host: Host }) {
             <div className="notes-form-actions">
               {editing.name && (
                 <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(editing)}>
-                  Delete recipe
+                  Delete request
                 </Button>
               )}
               <span className="hs-flex-spacer" />
@@ -228,9 +229,9 @@ export function RecipesPage({ host }: { host: Host }) {
           </div>
         </>
       ) : own.length === 0 ? (
-        <EmptyState icon={<Icon name="quill-pen-line" size={30} />} title="No recipes yet">
+        <EmptyState icon={<Icon name="bookmark-line" size={30} />} title="No saved requests yet">
           <Button icon={<Icon name="add-line" size={14} />} onClick={blank}>
-            New recipe
+            New request
           </Button>
         </EmptyState>
       ) : (
@@ -239,11 +240,11 @@ export function RecipesPage({ host }: { host: Host }) {
             first
             action={
               <Button size="sm" icon={<Icon name="add-line" size={14} />} onClick={blank}>
-                New recipe
+                New request
               </Button>
             }
           >
-            Your recipes
+            My requests
           </SettingsSection>
           <SettingsCard>
             {own.map((r) => (
@@ -270,7 +271,7 @@ export function RecipesPage({ host }: { host: Host }) {
             const name = deleting.name;
             setDeleting(null);
             setEditing(null);
-            void host.tool('delete_recipe', { name }, 'Delete').then(load, (e) => setProblem(words(e)));
+            void host.tool('delete_request', { name }, 'Delete').then(load, (e) => setProblem(words(e)));
           }}
           onCancel={() => setDeleting(null)}
         />
