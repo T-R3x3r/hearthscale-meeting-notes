@@ -207,80 +207,78 @@ export function MeetingPage({
             </div>
           </header>
 
-          <div className="notes-recorder">
-            {live?.state === 'recording' ? (
-              <>
-                <Button icon={<Icon name="pause-line" size={14} />} onClick={() => act('pause', 'Pause')}>
-                  Pause
-                </Button>
-                <Button icon={<Icon name="stop-line" size={14} />} onClick={() => act('stop', 'Stop')}>
-                  Stop
-                </Button>
-              </>
-            ) : live?.state === 'paused' ? (
-              <>
-                <Button icon={<Icon name="play-line" size={14} />} onClick={() => act('resume', 'Resume')}>
-                  Resume
-                </Button>
-                <Button icon={<Icon name="stop-line" size={14} />} onClick={() => act('stop', 'Stop')}>
-                  Stop
-                </Button>
-              </>
-            ) : writing ? (
-              <StatusWord tone="info" live>
-                Writing notes
-              </StatusWord>
-            ) : (
-              <span className="hs-tipwrap" {...recordWhy.hover}>
-                <Button
-                  variant={meeting.seconds === 0 ? 'primary' : 'secondary'}
-                  disabled={otherLive}
-                  icon={<Icon name="record-circle-line" size={14} />}
-                  onClick={() => act('record', 'Record', { id: meeting.id })}
-                >
-                  Record
-                </Button>
-                {recordWhy.tip}
-              </span>
-            )}
-            {!live && !writing && (
-              <IconAction name="Microphone" icon="mic-line" onClick={(e) => void showMics(anchorFrom('mic', e)).catch(fail)} />
-            )}
-            {live && (
-              <Button
-                icon={<Icon name={told ? 'check-line' : 'megaphone-line'} size={14} />}
-                onClick={() =>
-                  void navigator.clipboard
-                    .writeText('I take notes of this call with Meeting notes, on my own computer.')
-                    .then(() => {
-                      setTold(true);
-                      window.setTimeout(() => setTold(false), 1500);
-                    }, fail)
-                }
-              >
-                Tell the others
-              </Button>
-            )}
-            {live && (
-              <div className="notes-levels">
-                <span className="notes-level">
-                  <Icon name="mic-line" size={14} />
-                  <Meter value={levels.me} label="Your microphone" />
+          {!writing && (
+            <div className="notes-recorder">
+              {live?.state === 'recording' ? (
+                <>
+                  <Button icon={<Icon name="pause-line" size={14} />} onClick={() => act('pause', 'Pause')}>
+                    Pause
+                  </Button>
+                  <Button icon={<Icon name="stop-line" size={14} />} onClick={() => act('stop', 'Stop')}>
+                    Stop
+                  </Button>
+                </>
+              ) : live?.state === 'paused' ? (
+                <>
+                  <Button icon={<Icon name="play-line" size={14} />} onClick={() => act('resume', 'Resume')}>
+                    Resume
+                  </Button>
+                  <Button icon={<Icon name="stop-line" size={14} />} onClick={() => act('stop', 'Stop')}>
+                    Stop
+                  </Button>
+                </>
+              ) : (
+                <span className="hs-tipwrap" {...recordWhy.hover}>
+                  <Button
+                    variant={meeting.seconds === 0 ? 'primary' : 'secondary'}
+                    disabled={otherLive}
+                    icon={<Icon name="record-circle-line" size={14} />}
+                    onClick={() => act('record', 'Record', { id: meeting.id })}
+                  >
+                    Record
+                  </Button>
+                  {recordWhy.tip}
                 </span>
-                {levels.them !== null && (
+              )}
+              {!live && (
+                <IconAction name="Microphone" icon="mic-line" onClick={(e) => void showMics(anchorFrom('mic', e)).catch(fail)} />
+              )}
+              {live && (
+                <Button
+                  icon={<Icon name={told ? 'check-line' : 'megaphone-line'} size={14} />}
+                  onClick={() =>
+                    void navigator.clipboard
+                      .writeText('I take notes of this call with Meeting notes, on my own computer.')
+                      .then(() => {
+                        setTold(true);
+                        window.setTimeout(() => setTold(false), 1500);
+                      }, fail)
+                  }
+                >
+                  Tell the others
+                </Button>
+              )}
+              {live && (
+                <div className="notes-levels">
                   <span className="notes-level">
-                    <Icon name="volume-up-line" size={14} />
-                    <Meter value={levels.them} label="The computer's sound" />
+                    <Icon name="mic-line" size={14} />
+                    <Meter value={levels.me} label="Your microphone" />
                   </span>
-                )}
-              </div>
-            )}
-            {live && (
-              <StatusWord tone={live.state === 'recording' ? 'info' : 'dim'} live={live.state === 'recording'}>
-                {live.state === 'recording' ? 'Recording' : 'Paused'}
-              </StatusWord>
-            )}
-          </div>
+                  {levels.them !== null && (
+                    <span className="notes-level">
+                      <Icon name="volume-up-line" size={14} />
+                      <Meter value={levels.them} label="The computer's sound" />
+                    </span>
+                  )}
+                </div>
+              )}
+              {live && (
+                <StatusWord tone={live.state === 'recording' ? 'info' : 'dim'} live={live.state === 'recording'}>
+                  {live.state === 'recording' ? 'Recording' : 'Paused'}
+                </StatusWord>
+              )}
+            </div>
+          )}
 
           <section className="notes-body">
             {problem && <Notice>{problem}</Notice>}
@@ -315,6 +313,11 @@ export function MeetingPage({
                   onChange={setTab}
                 />
                 <span className="hs-flex-spacer" />
+                {writing && (
+                  <StatusWord tone="info" live>
+                    Writing notes
+                  </StatusWord>
+                )}
                 {!writing && !live && (opened.lines.length > 0 || opened.mine) && (
                   <Button
                     icon={<Icon name="refresh-line" size={14} />}
