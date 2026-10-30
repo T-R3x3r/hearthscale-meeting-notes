@@ -121,6 +121,11 @@ export function MeetingNotes({
     return () => offs.forEach((off) => off());
   }, [host, reload, show]);
 
+  const tabTitle = open ? label(open.meeting, locale, timeZone) : 'Meeting notes';
+  useEffect(() => {
+    void host.request('hearthscale/ui/set-tab', { title: tabTitle });
+  }, [host, tabTitle]);
+
   useEffect(() => {
     const el = root.current;
     if (!el) return;
@@ -281,6 +286,7 @@ export function MeetingNotes({
             levels={levels}
             locale={locale}
             timeZone={timeZone}
+            me={me}
             panel={panel}
             onPanel={setPanel}
             onQuote={(seconds) => {
@@ -356,6 +362,20 @@ export function MeetingNotes({
           partial={live && live.meeting === open?.meeting.id ? partial : { me: '', them: '' }}
           me={me}
           focus={focus}
+          onEdit={(n, text) => {
+            const id = open?.meeting.id;
+            if (!id) return;
+            void host
+              .tool<{ lines: Line[] }>('edit_line', { id, n, text }, text ? 'Fix' : 'Delete line')
+              .then(({ lines }) => setOpen((o) => (o?.meeting.id === id ? { ...o, lines } : o)), (e) => setProblem(words(e)));
+          }}
+          onName={(speaker, name) => {
+            const id = open?.meeting.id;
+            if (!id) return;
+            void host
+              .tool<{ meeting: Meeting }>('name_speaker', { id, speaker, name }, 'Name')
+              .then(({ meeting }) => setOpen((o) => (o?.meeting.id === id ? { ...o, meeting } : o)), (e) => setProblem(words(e)));
+          }}
         />
       )}
       {deleting && (

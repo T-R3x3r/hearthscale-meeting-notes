@@ -101,6 +101,16 @@ function hintWords(): string[] {
     .filter((w) => w.length > 0);
 }
 
+/** The id of the microphone the person chose, or undefined for the
+ *  system's default; refused when the chosen one is not connected. */
+async function microphone(): Promise<string | undefined> {
+  const chosen = (await ctx.store!.get('microphone')) as string | null;
+  if (!chosen) return undefined;
+  const found = (await ctx.capture!.devices('microphone')).find((d) => d.name === chosen);
+  if (!found) throw new Error(`The microphone "${chosen}" is not connected. Choose another one.`);
+  return found.id;
+}
+
 /** Starts recording a meeting, a new one when none is named. */
 async function record(id: string | undefined, byCall: boolean): Promise<Meeting> {
   if (recording) {
@@ -111,6 +121,7 @@ async function record(id: string | undefined, byCall: boolean): Promise<Meeting>
   const lines = await files.lines(meeting.id);
   const language = LANGUAGES[settings.language];
   const hint = hintWords();
+  const device = await microphone();
   const rec = new Recording(
     ctx,
     meeting,
@@ -130,7 +141,7 @@ async function record(id: string | undefined, byCall: boolean): Promise<Meeting>
       },
       live: (live: Live) => emit('live', live),
     },
-    { ...(language && { language }), ...(hint.length > 0 && { words: hint }) },
+    { ...(language && { language }), ...(hint.length > 0 && { words: hint }), ...(device && { device }) },
   );
   delete meeting.stopped;
   delete meeting.unheard;
@@ -416,6 +427,32 @@ const backend: Backend = {
       return {};
     },
 
+    async edit_line(raw) {
+      const { id, n, text } = input<{ id: string; n: number; text: string }>(raw);
+      const live = recording?.rec.meeting.id === id ? recording : null;
+      const meeting = live ? live.rec.meeting : await files.meeting(id);
+      const lines = live ? live.lines : await files.lines(id);
+      const at = lines.findIndex((l) => l.n === n);
+      if (at < 0) throw new Error('The transcript has no such line.');
+      if (text.trim()) lines[at] = { ...lines[at]!, text: text.trim() };
+      else lines.splice(at, 1);
+      await files.saveLines(meeting, lines, settings.name);
+      return { lines };
+    },
+
+    async name_speaker(raw) {
+      const { id, speaker, name } = input<{ id: string; speaker: string; name: string }>(raw);
+      const meeting = recording?.rec.meeting.id === id ? recording.rec.meeting : await files.meeting(id);
+      const speakers = { ...meeting.speakers };
+      if (name.trim()) speakers[speaker] = name.trim();
+      else delete speakers[speaker];
+      if (Object.keys(speakers).length > 0) meeting.speakers = speakers;
+      else delete meeting.speakers;
+      await saveMeeting(meeting);
+      await files.saveLines(meeting, recording?.rec.meeting.id === id ? recording.lines : await files.lines(id), settings.name);
+      return { meeting };
+    },
+
     async delete_meeting(raw) {
       const { id } = input<{ id: string }>(raw);
       if (recording?.rec.meeting.id === id) throw new Error('Stop the recording before you delete the meeting.');
@@ -451,6 +488,18 @@ const backend: Backend = {
 
     async stop() {
       void finish();
+      return {};
+    },
+
+    async microphones() {
+      const devices = await ctx.capture!.devices('microphone');
+      return { devices: devices.map((d) => d.name), chosen: ((await ctx.store!.get('microphone')) as string | null) ?? '' };
+    },
+
+    async choose_microphone(raw) {
+      const { name } = input<{ name: string }>(raw);
+      if (name) await ctx.store!.set('microphone', name);
+      else await ctx.store!.delete('microphone');
       return {};
     },
 

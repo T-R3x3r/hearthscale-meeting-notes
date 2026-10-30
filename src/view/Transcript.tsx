@@ -3,10 +3,11 @@
  * the microphone at the right, each line with its speaker and time, and
  * the words still being spoken at the end. It follows the end while the
  * person has not scrolled up, and scrolls to a moment a quote in the notes
- * names.
+ * names. A line's words can be fixed or the line deleted, and a speaker
+ * the diarization found can be given a name.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Icon, IconButton, useFloatingTips } from '@hearthscale/app-ui';
+import { Button, Icon, IconButton, Popover, TextInput, useFloatingTips } from '@hearthscale/app-ui';
 import { shortClock, speakerName, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 
 /** How near the end the list must be, in pixels, to follow it. */
@@ -18,16 +19,24 @@ export function Transcript({
   partial,
   me,
   focus,
+  onEdit,
+  onName,
 }: {
   meeting: Meeting;
   lines: Line[];
   partial: Record<Side, string>;
   me: string;
   focus: number | null;
+  /** Fixes a line's words; empty words delete the line. */
+  onEdit: (n: number, text: string) => void;
+  /** Names a speaker; an empty name takes the name away. */
+  onName: (speaker: string, name: string) => void;
 }) {
   const list = useRef<HTMLDivElement | null>(null);
   const following = useRef(true);
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [naming, setNaming] = useState<{ speaker: string; anchor: HTMLElement; name: string } | null>(null);
   const tips = useFloatingTips();
   const ordered = useMemo(() => [...lines].sort((a, b) => a.start - b.start || a.n - b.n), [lines]);
   const focused = useMemo(() => {
@@ -76,21 +85,69 @@ export function Transcript({
         {ordered.length === 0 && !partial.me && !partial.them && (
           <span className="notes-lines-empty">Lines show here as people speak.</span>
         )}
-        {ordered.map((l) => (
-          <div
-            key={l.n}
-            data-line={l.n}
-            data-side={l.side}
-            data-focus={focused?.n === l.n ? 'true' : undefined}
-            className="notes-line"
-          >
-            <span className="notes-line-who">
-              {speakerName(l, meeting, me)}
-              <span className="notes-line-time">{shortClock(l.start)}</span>
-            </span>
-            <span className="notes-line-text">{l.text}</span>
-          </div>
-        ))}
+        {ordered.map((l) => {
+          const name = speakerName(l, meeting, me);
+          const fix = tips(`fix-${l.n}`, 'Fix');
+          const del = tips(`delete-${l.n}`, 'Delete line');
+          return (
+            <div
+              key={l.n}
+              data-line={l.n}
+              data-side={l.side}
+              data-focus={focused?.n === l.n ? 'true' : undefined}
+              className="notes-line"
+            >
+              <span className="notes-line-who">
+                {l.speaker ? (
+                  <button
+                    type="button"
+                    className="notes-line-name"
+                    onClick={(e) => setNaming({ speaker: l.speaker!, anchor: e.currentTarget, name: meeting.speakers?.[l.speaker!] ?? '' })}
+                  >
+                    {name}
+                  </button>
+                ) : (
+                  name
+                )}
+                <span className="notes-line-time">{shortClock(l.start)}</span>
+                <span className="hs-flex-spacer" />
+                <span className="notes-line-acts">
+                  <span className="hs-tipwrap" {...fix.hover}>
+                    <IconButton size="sm" aria-label="Fix" onClick={() => setEditing(l.n)}>
+                      <Icon name="pencil-line" size={14} />
+                    </IconButton>
+                    {fix.tip}
+                  </span>
+                  <span className="hs-tipwrap" {...del.hover}>
+                    <IconButton size="sm" aria-label="Delete line" onClick={() => onEdit(l.n, '')}>
+                      <Icon name="delete-bin-line" size={14} />
+                    </IconButton>
+                    {del.tip}
+                  </span>
+                </span>
+              </span>
+              {editing === l.n ? (
+                <TextInput
+                  aria-label="Words"
+                  autoFocus
+                  defaultValue={l.text}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      onEdit(l.n, e.currentTarget.value);
+                      setEditing(null);
+                    } else if (e.key === 'Escape') setEditing(null);
+                  }}
+                  onBlur={(e) => {
+                    if (e.currentTarget.value !== l.text) onEdit(l.n, e.currentTarget.value);
+                    setEditing(null);
+                  }}
+                />
+              ) : (
+                <span className="notes-line-text">{l.text}</span>
+              )}
+            </div>
+          );
+        })}
         {(['them', 'me'] as const).map(
           (side) =>
             partial[side] && (
@@ -100,6 +157,29 @@ export function Transcript({
             ),
         )}
       </div>
+      {naming && (
+        <Popover anchor={naming.anchor} label="Name the speaker" onDismiss={() => setNaming(null)}>
+          <form
+            className="notes-naming"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onName(naming.speaker, naming.name);
+              setNaming(null);
+            }}
+          >
+            <TextInput
+              aria-label="Name"
+              data-autofocus
+              placeholder={`Speaker ${naming.speaker.slice(1)}`}
+              value={naming.name}
+              onChange={(e) => setNaming({ ...naming, name: e.target.value })}
+            />
+            <Button type="submit" size="sm" variant="primary">
+              Name
+            </Button>
+          </form>
+        </Popover>
+      )}
     </div>
   );
 }

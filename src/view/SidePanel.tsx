@@ -33,6 +33,8 @@ export function SidePanel({
   partial,
   me,
   focus,
+  onEdit,
+  onName,
 }: {
   host: Host;
   mode: PanelMode;
@@ -46,6 +48,8 @@ export function SidePanel({
   partial: Record<Side, string>;
   me: string;
   focus: number | null;
+  onEdit: (n: number, text: string) => void;
+  onName: (speaker: string, name: string) => void;
 }) {
   const place = useRef<HTMLDivElement | null>(null);
   const [session, setSession] = useState<string | null | undefined>(undefined);
@@ -144,7 +148,15 @@ export function SidePanel({
         </span>
       </div>
       {mode === 'transcript' && meeting ? (
-        <Transcript meeting={meeting} lines={lines} partial={partial} me={me} focus={focus} />
+        <Transcript
+          meeting={meeting}
+          lines={lines}
+          partial={partial}
+          me={me}
+          focus={focus}
+          onEdit={onEdit}
+          onName={onName}
+        />
       ) : (
         <>
           {session === null && meeting && (

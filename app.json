@@ -402,6 +402,69 @@
       ]
     },
     {
+      "name": "edit_line",
+      "title": "Fix transcript line",
+      "description": "Changes the words of one transcript line, or deletes the line when the text is empty.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "n",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "name_speaker",
+      "title": "Name speaker",
+      "description": "Gives a speaker of a meeting the name the person typed, or takes it away when the name is empty.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "speaker": {
+            "type": "string",
+            "pattern": "^s[0-9]+$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          }
+        },
+        "required": [
+          "id",
+          "speaker",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
       "name": "delete_meeting",
       "title": "Delete meeting",
       "description": "Deletes a meeting and its files.",
@@ -479,6 +542,43 @@
       "input": {
         "type": "object",
         "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "microphones",
+      "title": "Microphones",
+      "description": "The microphones of the computer and the one the person chose.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "choose_microphone",
+      "title": "Choose microphone",
+      "description": "Records from the microphone of this name, or from the system's default when the name is empty.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
         "additionalProperties": false
       },
       "mutating": true,

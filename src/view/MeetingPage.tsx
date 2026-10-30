@@ -24,7 +24,7 @@ import { quoteSeconds, shortClock, type Line, type Meeting } from '../shared/mee
 import { TEMPLATES } from '../shared/templates.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
-import { label, when } from './format.ts';
+import { exported, label, plainNotes, when } from './format.ts';
 import type { Levels } from './MeetingNotes.tsx';
 import type { PanelMode } from './SidePanel.tsx';
 
@@ -72,6 +72,7 @@ export function MeetingPage({
   levels,
   locale,
   timeZone,
+  me,
   panel,
   onPanel,
   onQuote,
@@ -86,6 +87,7 @@ export function MeetingPage({
   levels: Levels;
   locale: string;
   timeZone: string;
+  me: string;
   panel: PanelMode | null;
   onPanel: (mode: PanelMode | null) => void;
   onQuote: (seconds: number) => void;
@@ -98,6 +100,9 @@ export function MeetingPage({
   const [tab, setTab] = useState<'notes' | 'mine'>(opened.notes ? 'notes' : 'mine');
   const [now, setNow] = useState(Date.now());
   const [menu, setMenu] = useState<MenuAnchor | null>(null);
+  const [more, setMore] = useState<MenuAnchor | null>(null);
+  const [mics, setMics] = useState<{ anchor: MenuAnchor; devices: string[]; chosen: string } | null>(null);
+  const [copied, setCopied] = useState(false);
   const [again, setAgain] = useState<string | null>(null);
   const [quote, setQuote] = useState<{ seconds: number; x: number; y: number } | null>(null);
   const tips = useFloatingTips();
@@ -151,6 +156,31 @@ export function MeetingPage({
   const transcriptTip = tips('transcript', 'Transcript');
   const askTip = tips('ask', 'Ask');
   const toggle = (mode: PanelMode) => onPanel(panel === mode ? null : mode);
+  const moreTip = tips('more', 'More');
+  const micTip = tips('mic', 'Microphone');
+  const showMics = async (anchor: MenuAnchor) => {
+    const { devices, chosen } = await host.tool<{ devices: string[]; chosen: string }>('microphones');
+    setMics({ anchor, devices, chosen });
+  };
+  const chooseMic = (name: string) => {
+    setMics(null);
+    act('choose_microphone', 'Microphone', { name });
+  };
+  const name = label(meeting, locale, timeZone);
+
+  const copyNotes = async () => {
+    await navigator.clipboard.writeText(plainNotes(opened.notes) || opened.mine);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
+  const exportMeeting = async () => {
+    const text = exported(meeting, opened.notes, opened.mine, opened.lines, me, locale, timeZone);
+    const file = `${name.replace(/[\\/:*?"<>|]+/g, ' ').trim()}.md`;
+    const { isError } = await host.request<{ isError?: boolean }>('ui/download-file', {
+      contents: [{ type: 'resource', resource: { uri: `file:///${encodeURIComponent(file)}`, mimeType: 'text/markdown', text } }],
+    });
+    if (isError) onProblem('The file was not saved.');
+  };
 
   return (
     <>
@@ -183,6 +213,12 @@ export function MeetingPage({
                 <Icon name="question-answer-line" size={16} />
               </IconButton>
               {askTip.tip}
+            </span>
+            <span className="hs-tipwrap" {...moreTip.hover}>
+              <IconButton aria-label="More" onClick={(e) => setMore(anchorFrom('more', e))}>
+                <Icon name={copied ? 'check-line' : 'more-line'} size={16} />
+              </IconButton>
+              {moreTip.tip}
             </span>
           </div>
           <div className="notes-facts">
@@ -223,6 +259,14 @@ export function MeetingPage({
               >
                 Record
               </Button>
+            )}
+            {!live && !writing && (
+              <span className="hs-tipwrap" {...micTip.hover}>
+                <IconButton aria-label="Microphone" onClick={(e) => void showMics(anchorFrom('mic', e)).catch(fail)}>
+                  <Icon name="mic-line" size={16} />
+                </IconButton>
+                {micTip.tip}
+              </span>
             )}
             {live && (
               <div className="notes-levels">
@@ -300,6 +344,35 @@ export function MeetingPage({
         </div>
       )}
 
+      {mics && (
+        <MenuSurface anchor={mics.anchor} onDismiss={() => setMics(null)}>
+          <MItem label="System default" checked={mics.chosen === ''} onClick={() => chooseMic('')} />
+          {mics.devices.map((d) => (
+            <MItem key={d} label={d} checked={mics.chosen === d} onClick={() => chooseMic(d)} />
+          ))}
+        </MenuSurface>
+      )}
+      {more && (
+        <MenuSurface anchor={more} onDismiss={() => setMore(null)}>
+          <MItem
+            icon={<Icon name="file-copy-line" size={14} />}
+            label="Copy notes"
+            disabled={!opened.notes && !opened.mine}
+            onClick={() => {
+              setMore(null);
+              void copyNotes().catch(fail);
+            }}
+          />
+          <MItem
+            icon={<Icon name="download-2-line" size={14} />}
+            label="Export"
+            onClick={() => {
+              setMore(null);
+              void exportMeeting().catch(fail);
+            }}
+          />
+        </MenuSurface>
+      )}
       {menu && (
         <MenuSurface anchor={menu} onDismiss={() => setMenu(null)}>
           {TEMPLATES.map((t) => (

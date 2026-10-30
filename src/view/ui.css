@@ -292,3 +292,29 @@ body,
   color: var(--text);
   font-size: var(--fs-md);
 }
+
+.notes-line-acts {
+  display: none;
+  gap: var(--gap-label);
+}
+
+.notes-line:hover .notes-line-acts {
+  display: inline-flex;
+}
+
+.notes-line-name {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+
+.notes-naming {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  padding: var(--pad-chip);
+}

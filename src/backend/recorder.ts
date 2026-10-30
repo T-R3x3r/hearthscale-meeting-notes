@@ -65,6 +65,8 @@ export interface Hooks {
 export interface Options {
   language?: string;
   words?: string[];
+  /** The microphone's device id; the system's default when absent. */
+  device?: string;
 }
 
 /** A level in dBFS as a share from 0 to 1 for the meter. */
@@ -126,7 +128,11 @@ export class Recording {
    *  Where the computer cannot give its sound, the stretch records the
    *  microphone alone and says why. */
   async start(): Promise<void> {
-    const me = await this.open('me', 'microphone', { echo: true, keep: true });
+    const me = await this.open('me', 'microphone', {
+      echo: true,
+      keep: true,
+      ...(this.options.device && { device: this.options.device }),
+    });
     this.sources = [me];
     try {
       this.sources.push(await this.open('them', 'system-sound', { keep: true }));
@@ -146,7 +152,7 @@ export class Recording {
   private async open(
     side: Side,
     source: 'microphone' | 'system-sound',
-    options: { echo?: boolean; keep: boolean },
+    options: { echo?: boolean; keep: boolean; device?: string },
   ): Promise<Source> {
     const stream = await this.ctx.models!.listen({
       ...(this.options.language && { language: this.options.language }),
