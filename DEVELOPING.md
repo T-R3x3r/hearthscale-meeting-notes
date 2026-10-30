@@ -2,60 +2,49 @@
 
 `README.md` is the text the Marketplace shows under **About** on the listing of Meeting notes, so it is written for the people who install it. This file is for the people who work on it.
 
-Meeting notes is an ordinary Hearthscale app. Nothing in the platform
-knows its name; it installs from the Marketplace like any other app. The
-transcription runs on this computer's transcription model, through the
-Hearthscale Server.
+Meeting notes is an ordinary Hearthscale app, built only on the platform's documented API.
 
-## The view
+## Layout
 
-The app shows one view, `meetings`, which fills its tab: the meetings in a
-sidebar with New meeting, and the open meeting beside them with its
-title, Record and Stop, the transcript and the notes. A narrow tab shows
-the list or the meeting. Its source is React under `ui/src`, drawn with
-the `hs-*` classes and `ri-*` icons of the kit that Hearthscale loads into
-every view. Its build writes `views/meeting-notes.js`, the one file the
-package carries for it, so the file is committed with every change to the
-source:
+| Path | What it holds |
+| --- | --- |
+| `app.json` | The manifest. |
+| `backend.ts` | The backend's entry; `hearthscale dev` and `pack` bundle it with `src/backend` and `src/shared`. |
+| `src/backend/` | The backend: the meeting files, the recording, the speakers, the notes writer, and what the assistant reads. |
+| `src/shared/` | What the backend and the view share: the meeting files' form and the templates. |
+| `src/view/` | The view, React on the kit's parts (`@hearthscale/app-ui`). |
+| `views/meeting-notes.js` | The view's build, the one file the package carries for it, committed with every change to `src/view`. |
+| `prompt/`, `skills/` | The assistant's instructions and its built-in recipes. |
+
+## Build
 
 ```sh
-cd ui
 pnpm install
-pnpm build
+pnpm build        # type-checks everything, then builds the view
 ```
 
-## The microphone
-
-`app.json` names `microphone` in `permissions`, a consent fact on the
-enable card. The view opens the microphone with `getUserMedia` while it
-records, and closes it on Stop; a view whose app does not name it gets no
-sound. Recording needs the view on screen: the app records nothing in the
-background and no sound of other programs.
-
-## From a recording to a transcript
-
-1. The view takes the sound at 16 kHz in one channel, the form the
-   Server's transcription takes, and writes it as WAV files of at most ten
-   minutes each, because a view hands the platform at most 64 MiB at once.
-2. Each file goes to the platform as an asset of the app
-   (`hearthscale/ui/upload-file`).
-3. A `transcription` job runs on each file in turn (`hearthscale/jobs/*`,
-   through `uses: jobs`), on the transcription model set for the app or
-   for the role. The transcript of each part is kept as it comes.
-
-The job under way is kept with the meeting, so a view that opens again
-follows it. With no transcription model, the platform refuses the job in
-words, the view shows them, and Transcribe again tries once more after a
-model is set. The transcription is batch: the transcript shows after Stop,
-not while the meeting runs.
+The SDK packages come as files from the pre-release builder kit; `package.json` names them by their path on the developer's computer.
 
 ## Where the meetings live
 
-In the app's store, through the `store` extension: the list under
-`meetings`, newest first, each meeting under `meeting:<id>` (its title,
-its length, its recording's assets, the transcript of each part, the job
-under way, why the last one stopped, and the notes), and the meeting open
-last under `open`. A change is kept half a second after the typing stops.
+Each meeting is a folder `meetings/<id>/` in the app's data folder, the `data` mount, with Markdown files any program reads (`src/shared/meeting.ts`):
+
+- `meeting.md`: the facts as front matter, one `key: <JSON>` line each, then the title.
+- `my-notes.md`: what the person wrote.
+- `notes.md`: the written notes; the model's words sit in `<span data-model>`, and `[m:ss](#t<seconds>)` links to the moment of the transcript.
+- `transcript.md`: one line per stretch of speech, with a comment Markdown readers hide that holds its number, side, start, end and speaker.
+
+The form only grows. A later version may add keys and files, and must read every file an earlier one wrote, so people keep their meetings across updates. The app store is not used for meetings: it is one JSON file written whole on every change.
+
+The shared index watches `meetings/`, so the assistant searches every saved file.
+
+## Recording
+
+The backend records with `ctx.capture`: the microphone with `echo` and the computer's sound (`system-sound`, where the system gives it), each into a transcription stream of its own (`ctx.models.listen`), so each side's lines come apart as "Me" and "Them". Both captures keep their sound (`keep`); after the meeting a `diarization` job on the side with the voices tells the speakers apart, and the sound is then released. The backend runs as a service, so a recording goes on while the person uses other programs, and the notes are written after a recording that ends with no view open.
+
+## Notes
+
+`src/backend/writer.ts` writes the notes on the app's chat model with `format` (JSON that matches a schema), in one request or, for a transcript longer than the model's window, in parts and a last request that puts the parts' points under headings. The transcript goes to the model as `untrusted` text. The person's lines are kept word for word.
 
 ## Working on it
 
@@ -65,14 +54,11 @@ With a Hearthscale platform running on this machine:
 hearthscale dev .
 ```
 
-links this folder into the running platform, picks up every change, and
-asks once in the window before any code runs.
+links this folder into the running platform and picks up every change. A change of the app replaces its backend, so a recording that runs ends; close and reopen the view's tab to load a new view build.
 
 ## Releasing
 
-Install the Hearthscale registry's GitHub App on this repository once. Then
-every release whose tag equals `version` in `app.json` is picked up by the
-Marketplace.
+Install the Hearthscale registry's GitHub App on this repository once. Then every release whose tag equals `version` in `app.json` is picked up by the Marketplace.
 
 ```sh
 hearthscale pack .

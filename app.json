@@ -2,27 +2,697 @@
   "$schema": "https://hearthscale.com/app.schema.json",
   "id": "meeting-notes",
   "name": "Meeting notes",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "api": 6,
   "icon": {
     "light": "assets/icon-light.svg",
     "dark": "assets/icon-dark.svg"
   },
-  "description": "Record a meeting from your microphone, and keep its transcript beside your own notes. The transcription runs on this computer's transcription model.",
+  "description": "Hears both sides of a meeting on this computer, shows the transcript as people speak, and writes your notes into clear notes when it ends.",
   "license": "MIT",
-  "categories": ["notes", "productivity"],
+  "categories": [
+    "notes",
+    "productivity"
+  ],
   "payment": "free",
-  "environment": { "kind": "process" },
-  "permissions": ["microphone"],
-  "uses": ["store", "jobs"],
-  "models": { "transcription": { "required": false } },
+  "environment": {
+    "kind": "process",
+    "lifetime": "service"
+  },
+  "permissions": [
+    "clipboard-write"
+  ],
+  "uses": [
+    "store",
+    "events",
+    "sessions",
+    "index",
+    "models",
+    "jobs",
+    "capture.microphone",
+    "capture.system-sound",
+    "notifications"
+  ],
+  "models": {
+    "chat": {
+      "required": true
+    },
+    "transcription": {
+      "required": true
+    },
+    "diarization": {
+      "required": false
+    },
+    "embedding": {
+      "required": false
+    }
+  },
+  "agent": {
+    "name": "Meeting notes",
+    "description": "Answers questions about the person's meetings and changes their notes.",
+    "model": {
+      "kind": "chat",
+      "tools": true
+    },
+    "prompt": [
+      "prompt/system.md"
+    ],
+    "skills": [
+      "skills"
+    ],
+    "tools": [
+      "search_meetings",
+      "list_meetings",
+      "read_meeting",
+      "set_notes"
+    ],
+    "compaction": {
+      "focus": "The meetings the person asked about, with their ids and dates, and what the person wants from them."
+    }
+  },
+  "settings": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Your name in the transcript",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Me"
+        },
+        "about": {
+          "type": "string",
+          "title": "About you",
+          "description": "Your role and your work, which the notes take into account.",
+          "maxLength": 500,
+          "default": ""
+        },
+        "language": {
+          "type": "string",
+          "title": "Meeting language",
+          "enum": [
+            "Detect",
+            "English",
+            "German",
+            "French",
+            "Spanish",
+            "Italian",
+            "Portuguese",
+            "Dutch",
+            "Polish",
+            "Swedish",
+            "Danish",
+            "Norwegian",
+            "Finnish",
+            "Japanese",
+            "Chinese",
+            "Korean"
+          ],
+          "default": "Detect"
+        },
+        "notesLanguage": {
+          "type": "string",
+          "title": "Notes language",
+          "enum": [
+            "As the meeting",
+            "English",
+            "German",
+            "French",
+            "Spanish",
+            "Italian",
+            "Portuguese",
+            "Dutch",
+            "Polish",
+            "Swedish",
+            "Danish",
+            "Norwegian",
+            "Finnish",
+            "Japanese",
+            "Chinese",
+            "Korean"
+          ],
+          "default": "As the meeting"
+        },
+        "words": {
+          "type": "string",
+          "title": "Words to know",
+          "description": "Names and terms your meetings use, separated by commas. Only some transcription models take them.",
+          "maxLength": 1000,
+          "default": ""
+        },
+        "template": {
+          "type": "string",
+          "title": "Default template",
+          "enum": [
+            "Auto",
+            "One-on-one",
+            "Stand-up",
+            "Team meeting",
+            "Customer discovery",
+            "Sales call",
+            "Job interview",
+            "User interview",
+            "Sprint planning",
+            "Retrospective",
+            "Investor update",
+            "Pitch",
+            "Class or talk"
+          ],
+          "default": "Auto"
+        },
+        "askOnCall": {
+          "type": "boolean",
+          "title": "Ask to take notes when a call starts",
+          "default": true
+        },
+        "recordOnCall": {
+          "type": "boolean",
+          "title": "Start recording when a call starts",
+          "default": false
+        }
+      }
+    },
+    "layout": [
+      {
+        "title": "You",
+        "items": [
+          {
+            "kind": "property",
+            "property": "name"
+          },
+          {
+            "kind": "property",
+            "property": "about"
+          }
+        ]
+      },
+      {
+        "title": "Language",
+        "items": [
+          {
+            "kind": "property",
+            "property": "language"
+          },
+          {
+            "kind": "property",
+            "property": "notesLanguage"
+          },
+          {
+            "kind": "property",
+            "property": "words"
+          }
+        ]
+      },
+      {
+        "title": "Notes",
+        "items": [
+          {
+            "kind": "property",
+            "property": "template"
+          }
+        ]
+      },
+      {
+        "title": "Calls",
+        "items": [
+          {
+            "kind": "property",
+            "property": "askOnCall"
+          },
+          {
+            "kind": "property",
+            "property": "recordOnCall"
+          }
+        ]
+      }
+    ]
+  },
+  "triggers": [
+    {
+      "name": "record",
+      "kind": "tray",
+      "title": "Start recording"
+    },
+    {
+      "name": "call",
+      "kind": "device-in-use",
+      "devices": [
+        "microphone"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "meetings",
+      "title": "List meetings",
+      "description": "Every meeting, newest first.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "meeting",
+      "title": "Open meeting",
+      "description": "One meeting with its notes, the person's notes and its transcript.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "transcribe_recording",
+      "title": "Transcribe a recording",
+      "description": "Makes a meeting from a recording the person gave, and writes its notes.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "asset",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "new_meeting",
+      "title": "New meeting",
+      "description": "Makes a new meeting with no recording.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "rename",
+      "title": "Rename meeting",
+      "description": "Gives a meeting the title the person typed.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "save_mine",
+      "title": "Save my notes",
+      "description": "Keeps what the person wrote in a meeting.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "save_notes",
+      "title": "Save notes",
+      "description": "Keeps the person's changes to a meeting's notes.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "delete_meeting",
+      "title": "Delete meeting",
+      "description": "Deletes a meeting and its files.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "record",
+      "title": "Start recording",
+      "description": "Starts recording a meeting, a new one when no id is given.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "pause",
+      "title": "Pause recording",
+      "description": "Pauses the recording.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "resume",
+      "title": "Resume recording",
+      "description": "Goes on recording after a pause.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "stop",
+      "title": "Stop recording",
+      "description": "Ends the recording, then writes the notes.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "recording",
+      "title": "Recording",
+      "description": "The recording that runs now, if one does.",
+      "input": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "write_notes",
+      "title": "Write notes",
+      "description": "Writes a meeting's notes again with a template.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "template": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "template"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "timeoutMs": 1800000,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "search_meetings",
+      "title": "Search meetings",
+      "description": "Searches the notes, the person's notes and the transcripts of all meetings. Answers passages with the meeting's id, title, date and the part they come from. Use it to find which meetings talked about something.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Words or a question to look for."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "description": "How many passages at most; 8 when absent."
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "icon": "search"
+    },
+    {
+      "name": "list_meetings",
+      "title": "List meetings",
+      "description": "Lists meetings, newest first, with id, title, date and length. Narrow it by a date range and words of the title.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "The earliest date, as an ISO date such as 2026-10-01."
+          },
+          "to": {
+            "type": "string",
+            "description": "The latest date, as an ISO date."
+          },
+          "words": {
+            "type": "string",
+            "description": "Words the title holds."
+          }
+        },
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "icon": "scroll"
+    },
+    {
+      "name": "read_meeting",
+      "title": "Read meeting",
+      "description": "Reads one meeting by its id: its notes, the person's own notes, or its transcript with the time and speaker of each line. A long transcript comes in pages: read on from the number in `next`.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The meeting's id."
+          },
+          "part": {
+            "type": "string",
+            "enum": [
+              "notes",
+              "my notes",
+              "transcript"
+            ]
+          },
+          "from": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The first transcript line to read, counted from 0."
+          }
+        },
+        "required": [
+          "id",
+          "part"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "icon": "transcript"
+    },
+    {
+      "name": "set_notes",
+      "title": "Change notes",
+      "description": "Replaces a meeting's notes with the Markdown you give. Keep the person's own lines as they are, and put every word you write inside <span data-model>…</span>.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "markdown"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "icon": "pen",
+      "visibility": [
+        "model"
+      ]
+    },
+    {
+      "name": "mention_meetings",
+      "title": "Find meetings",
+      "description": "Meetings whose titles hold the typed words, for the @ list.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": false,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    }
+  ],
+  "capabilities": {
+    "tools": [
+      "search_meetings",
+      "read_meeting",
+      "list_meetings"
+    ]
+  },
+  "mentions": {
+    "tool": "mention_meetings"
+  },
   "surfaces": [
     {
       "id": "meetings",
       "kind": "view",
       "title": "Meeting notes",
       "entry": "views/meeting-notes.js",
-      "placements": ["rail", "tab"]
+      "placements": [
+        "rail",
+        "tab"
+      ],
+      "quickActions": [
+        {
+          "title": "Start recording",
+          "tool": "record"
+        }
+      ]
     }
   ]
 }

@@ -1,0 +1,294 @@
+/* The meeting-notes view's own layout, over the kit the platform loads
+   into the view. Every colour, corner, type size and gap is a token. */
+
+html,
+body,
+.notes-root,
+.notes {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.notes {
+  position: relative;
+  display: flex;
+}
+
+.notes[data-wide='false'] > .notes-side {
+  width: auto;
+  flex: 1;
+  border-right: none;
+}
+
+.notes-list > .hs-session-slot {
+  flex: none;
+}
+
+/* A mark's tip shows under it. */
+.hs-tipwrap {
+  position: relative;
+}
+
+.notes-page {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden auto;
+}
+
+.notes-page > .hs-empty-view {
+  height: 100%;
+}
+
+.notes-start {
+  display: flex;
+  gap: var(--gap-row);
+  justify-content: center;
+  margin-bottom: var(--gap-row);
+}
+
+.notes-sheet {
+  box-sizing: border-box;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--gap-page);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+}
+
+.notes-top {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+
+.notes-title {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-app);
+  font-size: var(--fs-page-hero);
+  font-weight: var(--fw-strong);
+}
+
+.notes-title::placeholder {
+  color: var(--dim);
+}
+
+.notes-facts {
+  display: flex;
+  gap: var(--gap-row);
+  color: var(--mut);
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.notes-recorder {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  min-height: var(--h-ctl);
+}
+
+.notes-levels {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-label);
+  min-width: 0;
+}
+
+.notes-working {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  color: var(--mut);
+  font-size: var(--fs-md);
+}
+
+.notes-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+/* A quote's time after a model's words: a small mark that names the
+   moment of the transcript it came from. */
+.notes-written a[href^='#t'] {
+  margin-left: var(--gap-label);
+  padding: 0 var(--gap-label);
+  border-radius: var(--r-pill);
+  background: var(--hov);
+  color: var(--mut);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.notes-written a[href^='#t']:hover {
+  color: var(--text);
+}
+
+.notes-quote {
+  position: fixed;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-label);
+  max-width: calc(var(--content-width) / 2);
+  margin-top: var(--gap-label);
+  pointer-events: none;
+}
+
+.notes-quote-line {
+  white-space: normal;
+}
+
+/* The panel at the right: the transcript, or the chat of Ask, which
+   Hearthscale draws in the slot the panel keeps free. */
+.notes-panel {
+  box-sizing: border-box;
+  width: calc(var(--w-sidebar) * 1.5);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: var(--bw) solid var(--line);
+}
+
+.notes[data-wide='false'] .notes-panel {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  border-left: none;
+  background: var(--win);
+}
+
+.notes-panel-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-height: var(--h-tab);
+  padding: 0 var(--pad-row-x);
+}
+
+.notes-panel-title {
+  color: var(--text);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semi);
+}
+
+.notes-ask {
+  flex: 1;
+  min-height: 0;
+}
+
+.notes-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-inline);
+  padding: 0 var(--pad-row-x) var(--gap-row);
+}
+
+.notes-transcript {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-copy {
+  position: absolute;
+  top: 0;
+  right: var(--pad-row-x);
+  z-index: 1;
+}
+
+.notes-lines {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-stack);
+  padding: var(--gap-row) var(--pad-row-x) var(--gap-page);
+}
+
+.notes-lines-empty {
+  color: var(--dim);
+  font-size: var(--fs-md);
+}
+
+.notes-line {
+  box-sizing: border-box;
+  max-width: 85%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-label);
+  padding: var(--pad-chip);
+  border-radius: var(--r-card);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.notes-line[data-side='them'] {
+  align-self: flex-start;
+  background: var(--card);
+  color: var(--text);
+}
+
+.notes-line[data-side='me'] {
+  align-self: flex-end;
+  background: var(--bubu);
+  color: var(--bubut);
+}
+
+.notes-line[data-partial='true'] {
+  opacity: var(--press-fade);
+}
+
+.notes-line[data-focus='true'] {
+  box-shadow: 0 0 0 var(--bw) var(--focus);
+}
+
+.notes-line-who {
+  display: flex;
+  gap: var(--gap-inline);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+}
+
+.notes-line-time {
+  color: var(--mut);
+  font-weight: var(--fw-med);
+  font-variant-numeric: tabular-nums;
+}
+
+.notes-line-text {
+  overflow-wrap: anywhere;
+}
+
+.notes-file {
+  cursor: pointer;
+}
+
+.notes-picked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-row);
+  margin-bottom: var(--gap-row);
+}
+
+.notes-picked-name {
+  color: var(--text);
+  font-size: var(--fs-md);
+}

@@ -1,15 +1,23 @@
 # Meeting notes
 
-Record a meeting from your microphone and keep its transcript beside your own notes. The transcript is written by the transcription model on this computer.
+Take notes of your meetings on your own computer. Meeting notes hears both sides of a call, shows the transcript while people speak, and turns your short notes into clear notes when the meeting ends. No bot joins the call, and nothing leaves your computer unless you choose a cloud model.
 
 ## Get started
 
-Open Meeting notes from the rail and choose **New meeting**. Give the meeting a title, choose **Record** when it starts and **Stop** when it ends. The transcript shows after **Stop**, and you can write your own notes under **Notes** at any time.
+Open Meeting notes from the rail and choose **Record**. Write short points under **My notes** while people speak, and choose **Stop** when the meeting ends. Your notes and the transcript then become **Notes**, in the shape of a template. Your own words stay as you wrote them; the words the model added are lighter, and the time after them shows the moment of the transcript they came from.
 
-Meeting notes needs a transcription model. Download one in Hearthscale Server, and choose it under **Settings → Providers** in **Defaults**, or on the settings page of Meeting notes. Without one, the meeting says so, and **Transcribe again** tries once more after you set one.
+- **Transcript** shows the lines as people speak: the other side at the left, you at the right.
+- **Ask** answers questions about the meeting, or about all your meetings on the start page. Type `/` for recipes such as a follow-up mail or the next steps.
+- **Write again** writes the notes again with another template.
+- **Transcribe a recording** makes a meeting from a sound file.
+
+When another program starts using your microphone, such as a call, Meeting notes asks whether to take notes. You can change this in its settings, along with your name in the transcript, the language, the words your meetings use and the default template.
+
+Meeting notes needs a chat model and a transcription model. Download them in Hearthscale Server and choose them under **Settings → Providers**, or on the settings page of Meeting notes. With a diarization model it also tells the speakers apart.
 
 ## What Meeting notes asks for
 
-- **Your microphone.** Meeting notes records only between **Record** and **Stop**, while its tab is on screen, and it records no sound of other programs.
-- **Your transcription model.** After **Stop**, the recording goes to the transcription model, in parts of up to ten minutes.
-- **Its own data.** Your meetings, their recordings, transcripts and notes stay in the app's own data on this computer.
+- **Your microphone and the sound your computer plays**, only while it records. The tray icon shows when it does.
+- **Your models**, to transcribe, to find the speakers and to write the notes.
+- **To keep running in the background**, so a recording goes on while you use other programs, and the notes are written when it ends.
+- **Its own data.** Each meeting is a folder of Markdown files in the app's data folder on this computer. The sound is not kept.

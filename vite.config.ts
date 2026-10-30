@@ -8,13 +8,14 @@ import { defineConfig } from 'vite';
 // its own styles included.
 export default defineConfig({
   plugins: [react()],
+  define: { 'process.env.NODE_ENV': '"production"' },
   build: {
-    outDir: '../views',
+    outDir: 'views',
     emptyOutDir: false,
     target: 'es2022',
     modulePreload: false,
     rollupOptions: {
-      input: 'src/index.tsx',
+      input: 'src/view/index.tsx',
       external: ['@modelcontextprotocol/ext-apps'],
       output: {
         format: 'es',
