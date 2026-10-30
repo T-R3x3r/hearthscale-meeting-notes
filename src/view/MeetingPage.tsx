@@ -177,7 +177,7 @@ export function MeetingPage({
   const exportMeeting = async () => {
     const text = exported(meeting, opened.notes, opened.mine, opened.lines, me, locale, timeZone);
     const file = `${name.replace(/[\\/:*?"<>|]+/g, ' ').trim()}.md`;
-    const { isError } = await host.app.downloadFile({
+    const { isError } = await host.call('ui/download-file', {
       contents: [{ type: 'resource', resource: { uri: `file:///${encodeURIComponent(file)}`, mimeType: 'text/markdown', text } }],
     });
     if (isError) onProblem('The meeting could not be exported. Try again.');

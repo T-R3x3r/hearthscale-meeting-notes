@@ -8,7 +8,6 @@
  * slot names becomes the rail tab's conversation too.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { McpUiMessageResultSchema } from '@modelcontextprotocol/ext-apps';
 import { Button, SegmentedControl } from '@hearthscale/app-ui';
 import { shortClock, speakerName, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 import type { Host } from './host.ts';
@@ -161,9 +160,7 @@ export function SidePanel({
 
   useEffect(() => {
     if (mode !== 'ask' || !session || !fresh || !meeting) return;
-    // `_meta` aims the chip at the panel's slot alone, and the library's
-    // updateModelContext takes no `_meta`.
-    const params = {
+    void host.call('ui/update-model-context', {
       content: [
         {
           type: 'text',
@@ -172,12 +169,11 @@ export function SidePanel({
         },
       ],
       _meta: { 'hearthscale/modelContext': { slot: SLOT } },
-    };
-    void host.app.request({ method: 'ui/update-model-context', params } as never, McpUiMessageResultSchema);
+    });
   }, [host, mode, session, fresh, meeting, name]);
 
   const ask = (text: string) =>
-    void host.app.sendMessage({ role: 'user', content: [{ type: 'text', text }] });
+    void host.call('ui/message', { role: 'user', content: [{ type: 'text', text }] });
 
   return (
     <aside className="notes-panel" data-mode={mode}>

@@ -4,8 +4,7 @@
  * backend sends while it records and writes.
  */
 import type { App } from '@modelcontextprotocol/ext-apps';
-import type { HostCall } from '@hearthscale/app';
-import { hostCall } from '@hearthscale/app/view';
+import { hostCall, type ViewCall } from '@hearthscale/app/view';
 
 /** Why something failed, in the platform's words without the SDK's error
  *  code before them. */
@@ -17,7 +16,7 @@ type Handler = (data: never) => void;
 export class Host {
   private readonly handlers = new Map<string, Set<Handler>>();
   /** Sends a request of the platform's bridge, typed by its method. */
-  readonly call: HostCall;
+  readonly call: ViewCall;
 
   constructor(readonly app: App) {
     this.call = hostCall(app);
