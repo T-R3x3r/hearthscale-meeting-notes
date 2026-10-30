@@ -220,19 +220,22 @@ body,
   color: var(--text);
 }
 
+/* The words a quote's time points at, under the time, on the kit's
+   popover plate. */
 .notes-quote {
   position: fixed;
-  z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--gap-label);
+  gap: var(--gap-stack);
   max-width: calc(var(--content-width) / 2);
-  margin-top: var(--gap-label);
+  margin-top: var(--gap-inline);
   pointer-events: none;
 }
 
 .notes-quote-line {
-  white-space: normal;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  text-align: start;
 }
 
 /* The panel at the right: the transcript, or the chat of Ask, which

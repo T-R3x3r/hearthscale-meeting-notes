@@ -383,9 +383,9 @@ export function MeetingPage({
       </div>
 
       {quote && quoted.length > 0 && (
-        <div className="hs-tooltip notes-quote" style={{ left: quote.x, top: quote.y }}>
+        <div className="hs-popover notes-quote" style={{ left: quote.x, top: quote.y }}>
           {quoted.map((l) => (
-            <span key={l.n} className="hs-tooltip-title notes-quote-line">
+            <span key={l.n} className="notes-quote-line">
               {l.text}
             </span>
           ))}
