@@ -9,6 +9,7 @@ import {
   Button,
   EmptyState,
   Icon,
+  LinkRow,
   ListRow,
   Mono,
   Notice,
@@ -95,6 +96,13 @@ export function TemplatesPage({ host }: { host: Host }) {
               >
                 Add section
               </Button>
+            </div>
+            <div className="notes-form-actions">
+              {editing.id && (
+                <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(editing)}>
+                  Delete template
+                </Button>
+              )}
               <span className="hs-flex-spacer" />
               <Button variant="ghost" onClick={() => setEditing(null)}>
                 Cancel
@@ -120,16 +128,7 @@ export function TemplatesPage({ host }: { host: Host }) {
           {own.length > 0 && (
             <SettingsCard>
               {own.map((t) => (
-                <ListRow
-                  key={t.id}
-                  title={t.name}
-                  actions={
-                    <>
-                      <IconAction name="Edit template" icon="pencil-line" size="sm" onClick={() => setEditing(t)} />
-                      <IconAction name="Delete template" icon="delete-bin-line" size="sm" onClick={() => setDeleting(t)} />
-                    </>
-                  }
-                />
+                <LinkRow key={t.id} title={t.name} onOpen={() => setEditing(t)} />
               ))}
             </SettingsCard>
           )}
@@ -150,6 +149,7 @@ export function TemplatesPage({ host }: { host: Host }) {
           onConfirm={() => {
             const id = deleting.id;
             setDeleting(null);
+            setEditing(null);
             void host.tool('delete_template', { id }, 'Delete').then(load, (e) => setProblem(words(e)));
           }}
           onCancel={() => setDeleting(null)}
@@ -204,6 +204,11 @@ export function RecipesPage({ host }: { host: Host }) {
               onChange={(e) => setEditing({ ...editing, text: e.target.value })}
             />
             <div className="notes-form-actions">
+              {editing.name && (
+                <Button variant="danger" icon={<Icon name="delete-bin-line" size={14} />} onClick={() => setDeleting(editing)}>
+                  Delete recipe
+                </Button>
+              )}
               <span className="hs-flex-spacer" />
               <Button variant="ghost" onClick={() => setEditing(null)}>
                 Cancel
@@ -234,19 +239,14 @@ export function RecipesPage({ host }: { host: Host }) {
           </SettingsSection>
           <SettingsCard>
             {own.map((r) => (
-              <ListRow
+              <LinkRow
                 key={r.name}
                 title={
                   <>
                     {r.title} <Mono>/{r.name}</Mono>
                   </>
                 }
-                actions={
-                  <>
-                    <IconAction name="Edit recipe" icon="pencil-line" size="sm" onClick={() => setEditing(r)} />
-                    <IconAction name="Delete recipe" icon="delete-bin-line" size="sm" onClick={() => setDeleting(r)} />
-                  </>
-                }
+                onOpen={() => setEditing(r)}
               />
             ))}
           </SettingsCard>
@@ -261,6 +261,7 @@ export function RecipesPage({ host }: { host: Host }) {
           onConfirm={() => {
             const name = deleting.name;
             setDeleting(null);
+            setEditing(null);
             void host.tool('delete_recipe', { name }, 'Delete').then(load, (e) => setProblem(words(e)));
           }}
           onCancel={() => setDeleting(null)}
