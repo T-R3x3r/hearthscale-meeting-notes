@@ -4,8 +4,11 @@
  * the panel reserves. Ask keeps one conversation for each meeting, named
  * after it, and one about all meetings on the start page; the panel makes
  * the conversation when Ask first opens there, and a meeting's starts
- * with the meeting as a chip only that chat shows. The conversation the
- * slot names becomes the rail tab's conversation too.
+ * with the meeting as a chip only that chat shows. Until the person
+ * sends the first message there, the panel shows Hearthscale's composer
+ * alone with the starters above it, both in the panel's middle; then the
+ * whole chat. The conversation the slot names becomes the rail tab's
+ * conversation too.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Button, SegmentedControl } from '@hearthscale/app-ui';
@@ -57,11 +60,14 @@ export function SidePanel({
   onName: (speaker: string, name: string) => void;
 }) {
   const place = useRef<HTMLDivElement | null>(null);
+  const room = useRef<HTMLDivElement | null>(null);
+  const [composer, setComposer] = useState<number | null>(null);
   const [session, setSession] = useState<string | undefined>(undefined);
   const [fresh, setFresh] = useState(false);
   const [round, setRound] = useState(0);
   const [copied, setCopied] = useState(false);
   const key = `ask:${meeting?.id ?? 'all'}`;
+  const opening = fresh && meeting !== null;
 
   const copy = async () => {
     if (!meeting) return;
@@ -122,12 +128,15 @@ export function SidePanel({
         setSession(now);
         void host.call('hearthscale/store/set', { key, value: now });
       }),
+      host.on<{ id: string; height: number }>('hearthscale/ui/slot-size', ({ id, height }) => {
+        if (id === SLOT) setComposer(height);
+      }),
     ];
     return () => offs.forEach((off) => off());
   }, [host, key, session]);
 
   useLayoutEffect(() => {
-    const el = place.current;
+    const el = opening ? room.current : place.current;
     if (mode !== 'ask' || !el || session === undefined) {
       void host.call('hearthscale/ui/slots', { slots: [] });
       return;
@@ -138,7 +147,7 @@ export function SidePanel({
         slots: [
           {
             id: SLOT,
-            kind: 'chat',
+            kind: opening ? 'composer' : 'chat',
             session,
             // The app's models are chosen on its settings page alone.
             modelPicker: false,
@@ -160,7 +169,7 @@ export function SidePanel({
       sizes.disconnect();
       void host.call('hearthscale/ui/slots', { slots: [] });
     };
-  }, [host, mode, session]);
+  }, [host, mode, session, opening]);
 
   useEffect(() => {
     if (mode !== 'ask' || !session || !fresh || !meeting) return;
@@ -176,8 +185,10 @@ export function SidePanel({
     });
   }, [host, mode, session, fresh, meeting, name]);
 
-  const ask = (text: string) =>
-    void host.call('ui/message', { role: 'user', content: [{ type: 'text', text }] });
+  const ask = async (text: string) => {
+    await host.call('ui/message', { role: 'user', content: [{ type: 'text', text }] });
+    if (session) await check(session);
+  };
 
   return (
     <aside className="notes-panel" data-mode={mode}>
@@ -217,18 +228,20 @@ export function SidePanel({
           onName={onName}
         />
       ) : (
-        <>
-          {fresh && meeting && (
-            <div className="notes-starters">
-              {STARTERS.map((s) => (
-                <Button key={s.label} size="sm" onClick={() => ask(s.text)}>
-                  {s.label}
-                </Button>
-              ))}
-            </div>
+        <div ref={place} className="notes-ask" data-opening={opening ? 'true' : undefined}>
+          {opening && (
+            <>
+              <div className="notes-starters">
+                {STARTERS.map((s) => (
+                  <Button key={s.label} size="sm" onClick={() => void ask(s.text)}>
+                    {s.label}
+                  </Button>
+                ))}
+              </div>
+              <div ref={room} className="notes-compose-room" style={composer === null ? undefined : { height: composer }} />
+            </>
           )}
-          <div ref={place} className="notes-ask" />
-        </>
+        </div>
       )}
     </aside>
   );

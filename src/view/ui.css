@@ -286,11 +286,28 @@ body,
   min-height: 0;
 }
 
+/* A meeting's chat before its first message: the starters over
+   Hearthscale's composer in the panel's middle, at the side inset the
+   composer has in a whole chat. */
+.notes-ask[data-opening='true'] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gap-row);
+  padding: 0 calc(var(--space) * 7.25);
+}
+
 .notes-starters {
   display: flex;
   flex-wrap: wrap;
   gap: var(--gap-inline);
-  padding: var(--gap-row) calc(var(--space) * 3.5) 0;
+}
+
+/* The composer slot's place; the composer's own height once Hearthscale
+   reports it. */
+.notes-compose-room {
+  flex: none;
+  height: var(--h-ctl-lg);
 }
 
 .notes-transcript {
@@ -469,11 +486,6 @@ body,
 
   .notes-panel-bar,
   .notes-lines {
-    padding-left: var(--gap-row);
-    padding-right: var(--gap-row);
-  }
-
-  .notes-starters {
     padding-left: var(--gap-row);
     padding-right: var(--gap-row);
   }
