@@ -184,8 +184,8 @@ body,
 /* A quote's time after a model's words: a small mark that names the
    moment of the transcript it came from. */
 .notes-written a[href^='#t'] {
-  margin-left: var(--gap-label);
-  padding: 0 var(--gap-label);
+  margin-left: var(--gap-inline);
+  padding: 0 calc(var(--space) * 1.25);
   border-radius: var(--r-pill);
   background: var(--hov);
   color: var(--mut);
@@ -193,9 +193,13 @@ body,
   font-variant-numeric: tabular-nums;
   text-decoration: none;
   cursor: pointer;
+  transition:
+    background var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
 }
 
 .notes-written a[href^='#t']:hover {
+  background: var(--btnhov);
   color: var(--text);
 }
 
