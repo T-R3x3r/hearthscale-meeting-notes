@@ -138,9 +138,8 @@ export function SidePanel({
             id: SLOT,
             kind: 'chat',
             session,
-            // The app's models are chosen on its settings page alone. The
-            // SDK's slot type does not name this field.
-            ...({ modelPicker: false } as object),
+            // The app's models are chosen on its settings page alone.
+            modelPicker: false,
             insets: {
               left: box.left,
               top: box.top,
