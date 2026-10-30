@@ -185,25 +185,27 @@ export function MeetingPage({
     <>
       <div className="hs-scroll hs-settings-scroll notes-page">
         <main className="notes-sheet">
-          <div className="notes-top">
-            <input
-              className="notes-title"
-              aria-label="Title"
-              placeholder={label({ ...meeting, title: '' }, locale, timeZone)}
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                rename(e.target.value);
-              }}
-            />
-            <IconAction name="Transcript" icon="chat-voice-line" pressed={panel === 'transcript'} onClick={() => toggle('transcript')} />
-            <IconAction name="Ask" icon="question-answer-line" pressed={panel === 'ask'} onClick={() => toggle('ask')} />
-            <IconAction name="More" icon={copied ? 'check-line' : 'more-line'} onClick={(e) => setMore(anchorFrom('more', e))} />
-          </div>
-          <div className="notes-facts">
-            <span>{when(meeting.created, locale, timeZone)}</span>
-            {seconds > 0 && <span>{shortClock(seconds)}</span>}
-          </div>
+          <header className="notes-head">
+            <div className="notes-top">
+              <input
+                className="notes-title"
+                aria-label="Title"
+                placeholder={label({ ...meeting, title: '' }, locale, timeZone)}
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  rename(e.target.value);
+                }}
+              />
+              <IconAction name="Transcript" icon="chat-voice-line" pressed={panel === 'transcript'} onClick={() => toggle('transcript')} />
+              <IconAction name="Ask" icon="question-answer-line" pressed={panel === 'ask'} onClick={() => toggle('ask')} />
+              <IconAction name="More" icon={copied ? 'check-line' : 'more-line'} onClick={(e) => setMore(anchorFrom('more', e))} />
+            </div>
+            <div className="notes-facts">
+              <span>{when(meeting.created, locale, timeZone)}</span>
+              {seconds > 0 && <span>{shortClock(seconds)}</span>}
+            </div>
+          </header>
 
           <div className="notes-recorder">
             {live?.state === 'recording' ? (
@@ -280,75 +282,77 @@ export function MeetingPage({
             )}
           </div>
 
-          {problem && <Notice>{problem}</Notice>}
-          <ModelNeeds host={host} />
-          {meeting.unheard && <Notice>Only the microphone is heard: {meeting.unheard}</Notice>}
-          {live?.quiet && <Notice>No sound from the other side yet.</Notice>}
-          {meeting.stopped && !live && <Notice>{meeting.stopped}</Notice>}
-          {meeting.failed && !writing && (
-            <Notice>
-              {meeting.failed}
-              {(opened.lines.length > 0 || opened.mine) && (
-                <button
-                  type="button"
-                  className="hs-link"
-                  onClick={() => act('write_notes', 'Write again', { id: meeting.id, template: meeting.template ?? 'auto' })}
-                >
-                  Write again
-                </button>
-              )}
-            </Notice>
-          )}
+          <section className="notes-body">
+            {problem && <Notice>{problem}</Notice>}
+            <ModelNeeds host={host} />
+            {meeting.unheard && <Notice>Only the microphone is heard: {meeting.unheard}</Notice>}
+            {live?.quiet && <Notice>No sound from the other side yet.</Notice>}
+            {meeting.stopped && !live && <Notice>{meeting.stopped}</Notice>}
+            {meeting.failed && !writing && (
+              <Notice>
+                {meeting.failed}
+                {(opened.lines.length > 0 || opened.mine) && (
+                  <button
+                    type="button"
+                    className="hs-link"
+                    onClick={() => act('write_notes', 'Write again', { id: meeting.id, template: meeting.template ?? 'auto' })}
+                  >
+                    Write again
+                  </button>
+                )}
+              </Notice>
+            )}
 
-          {hasNotes && (
-            <div className="notes-tabs">
-              <SegmentedControl
-                label="Notes"
-                value={tab}
-                options={[
-                  { value: 'notes', label: 'Notes' },
-                  { value: 'mine', label: 'My notes' },
-                ]}
-                onChange={setTab}
-              />
-              <span className="hs-flex-spacer" />
-              {!writing && !live && (opened.lines.length > 0 || opened.mine) && (
-                <Button
-                  icon={<Icon name="refresh-line" size={14} />}
-                  trailingIcon={<Icon name="arrow-down-s-line" size={14} />}
-                  onClick={(e) => {
-                    const anchor = anchorFrom('again', e);
-                    void host
-                      .tool<{ templates: Template[] }>('templates')
-                      .then(({ templates }) => setMenu({ anchor, own: templates }), fail);
-                  }}
-                >
-                  Write again
-                </Button>
-              )}
-            </div>
-          )}
-
-          {tab === 'notes' && hasNotes ? (
-            writing ? null : (
-              <div className="notes-written" onClickCapture={onNotesClick} onMouseOver={onNotesHover} onMouseLeave={() => setQuote(null)}>
-                <RichTextEditor
-                  key={`notes-${opened.version}`}
+            {hasNotes && (
+              <div className="notes-tabs">
+                <SegmentedControl
                   label="Notes"
-                  content={opened.notes}
-                  onChange={(editor) => saveNotes(editor.getMarkdown())}
+                  value={tab}
+                  options={[
+                    { value: 'notes', label: 'Notes' },
+                    { value: 'mine', label: 'My notes' },
+                  ]}
+                  onChange={setTab}
                 />
+                <span className="hs-flex-spacer" />
+                {!writing && !live && (opened.lines.length > 0 || opened.mine) && (
+                  <Button
+                    icon={<Icon name="refresh-line" size={14} />}
+                    trailingIcon={<Icon name="arrow-down-s-line" size={14} />}
+                    onClick={(e) => {
+                      const anchor = anchorFrom('again', e);
+                      void host
+                        .tool<{ templates: Template[] }>('templates')
+                        .then(({ templates }) => setMenu({ anchor, own: templates }), fail);
+                    }}
+                  >
+                    Write again
+                  </Button>
+                )}
               </div>
-            )
-          ) : (
-            <RichTextEditor
-              key={`mine-${opened.version}`}
-              label="My notes"
-              placeholder="Write your notes"
-              content={opened.mine}
-              onChange={(editor) => saveMine(editor.getMarkdown())}
-            />
-          )}
+            )}
+
+            {tab === 'notes' && hasNotes ? (
+              writing ? null : (
+                <div className="notes-written" onClickCapture={onNotesClick} onMouseOver={onNotesHover} onMouseLeave={() => setQuote(null)}>
+                  <RichTextEditor
+                    key={`notes-${opened.version}`}
+                    label="Notes"
+                    content={opened.notes}
+                    onChange={(editor) => saveNotes(editor.getMarkdown())}
+                  />
+                </div>
+              )
+            ) : (
+              <RichTextEditor
+                key={`mine-${opened.version}`}
+                label="My notes"
+                placeholder="Write your notes"
+                content={opened.mine}
+                onChange={(editor) => saveMine(editor.getMarkdown())}
+              />
+            )}
+          </section>
         </main>
       </div>
 

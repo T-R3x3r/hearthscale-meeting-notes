@@ -97,6 +97,20 @@ body,
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  gap: var(--gap-page);
+}
+
+/* A meeting's title and date, the recorder, and its notes are the three
+   blocks of its page; the title and the date belong together. */
+.notes-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-label);
+}
+
+.notes-body {
+  display: flex;
+  flex-direction: column;
   gap: var(--gap-row);
 }
 
