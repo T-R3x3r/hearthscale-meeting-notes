@@ -78,6 +78,12 @@ const detail = {
   additionalProperties: false,
 };
 
+/** What "next" holds, for the request of the whole transcript and of a part. */
+const NEXT =
+  '"next" lists only the tasks someone agreed to do, never a status or a fact. Give each as a short task and, in ' +
+  '"owner", the name of the person who does it: a name said in the meeting, as when a speaker is called by name and ' +
+  'answers; or "" when no name is said.';
+
 const tokens = (text: string) => Math.ceil(text.length / CHARS_PER_TOKEN);
 
 /** The person's notes as separate lines, without list marks or heading
@@ -93,6 +99,14 @@ export function personLines(mine: string): string[] {
     )
     .filter((l) => l.length > 0);
 }
+
+/** A task's owner as the model gives it, kept only when the meeting said
+ *  that name: each word of it that does not start in lower case is in the
+ *  spoken words, the person's notes or a speaker's name. */
+const named = (who: string, said: string) => {
+  const words = who.split(/[\s,]+/).filter((w) => w && !/^\p{Ll}/u.test(w));
+  return words.length > 0 && words.every((w) => said.includes(w)) ? who : '';
+};
 
 const escapeHtml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -124,7 +138,7 @@ export class Writer {
       {
         messages,
         format: { name, schema },
-        reasoning: 'none',
+        reasoning: 'auto',
         sampling: { temperature: 0.2 },
       },
       signal,
@@ -148,8 +162,9 @@ export class Writer {
       role: 'system',
       content:
         'You write meeting notes from the transcript of a meeting and the notes the person took during it. ' +
-        `${language} Write short, concrete points. Use only what the transcript and the person's notes say: ` +
-        'never invent names, numbers or dates. Give each point the numbers of the transcript lines it comes from. ' +
+        `${language} Write each point in your own words, short: at most 15 words. Never copy a transcript line. ` +
+        "Use only what the transcript and the person's notes say: never invent names, numbers or dates. " +
+        'Give each point the numbers of the transcript lines it comes from. ' +
         'Answer only with JSON that matches the schema.',
     };
   }
@@ -162,7 +177,10 @@ export class Writer {
 
   private shape(template: Template): string {
     if (template.sections.length === 0) {
-      return 'Choose two to five short headings that fit this meeting, and put the points under them.';
+      return (
+        'Choose two to five short headings for the topics of this meeting, and put under them what was said and ' +
+        'decided. Tasks go only in "next", never in a section.'
+      );
     }
     const list = template.sections.map((s, i) => `${i + 1}. ${s.heading}: ${s.guide}`).join('\n');
     return `Use exactly these sections, in this order, with these headings:\n${list}`;
@@ -223,8 +241,7 @@ export class Writer {
       required.push('mine');
     }
     const ask =
-      'Write the notes. "title" is a short title for the meeting. "next" lists the next steps people agreed, ' +
-      'each with the person who does it ("owner"), or "" when nobody was named.' +
+      `Write the notes. "title" is a short title for the meeting. ${NEXT}` +
       (person.length > 0
         ? ' In "mine", give each of the person’s notes by its number, the number of the section it belongs to ' +
           '(counted from 1), and up to two details from the transcript about it.'
@@ -300,8 +317,7 @@ export class Writer {
               {
                 type: 'text',
                 text:
-                  'List the points of this part in "points", and the next steps people agreed in "next", each with ' +
-                  'the person who does it ("owner"), or "" when nobody was named.' +
+                  `List the points of this part in "points". ${NEXT}` +
                   (person.length > 0
                     ? ' In "mine", give details from this part about the person’s notes, by the note’s number.'
                     : ''),
@@ -429,10 +445,17 @@ export class Writer {
       out.push('');
     });
     const steps = next.filter((s) => s.text.trim());
+    const said = [
+      ...brief.lines.map((l) => l.text),
+      ...person,
+      brief.me,
+      ...Object.values(brief.meeting.speakers ?? {}),
+    ].join('\n');
     if (steps.length > 0) {
       out.push('## Next steps', '');
       for (const s of steps) {
-        const owner = s.owner.trim() ? ` ${model(`(${s.owner.trim()})`)}` : '';
+        const who = named(s.owner.trim(), said);
+        const owner = who ? ` ${model(`(${who})`)}` : '';
         out.push(`- [ ] ${model(s.text)}${owner}${quote(s.lines)}`);
       }
       out.push('');

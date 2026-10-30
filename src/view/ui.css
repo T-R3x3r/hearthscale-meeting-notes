@@ -380,3 +380,25 @@ body,
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
 }
+
+/* The models page: what runs, downloads, and a model to add. */
+.notes-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-inline);
+  width: 100%;
+}
+
+.notes-progress {
+  width: calc(var(--w-sidebar) / 2);
+}
+
+.notes-pick {
+  cursor: pointer;
+}
+
+.notes-section .notes-top,
+.notes-section .notes-item {
+  width: 100%;
+  box-sizing: border-box;
+}

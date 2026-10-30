@@ -16,6 +16,7 @@ import { label } from './format.ts';
 import { forTranscription } from './sound.ts';
 import { SidePanel, type PanelMode } from './SidePanel.tsx';
 import { RecipesPage, TemplatesPage } from './Library.tsx';
+import { ModelsPage } from './Models.tsx';
 
 /** The narrowest tab that shows the list beside the meeting. */
 const WIDE = 720;
@@ -48,7 +49,7 @@ export function MeetingNotes({
   const [picked, setPicked] = useState<{ name: string; asset: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [panel, setPanel] = useState<PanelMode | null>(first.live ? 'transcript' : null);
-  const [section, setSection] = useState<'meetings' | 'templates' | 'recipes'>('meetings');
+  const [section, setSection] = useState<'meetings' | 'templates' | 'recipes' | 'models'>('meetings');
   const [focus, setFocus] = useState<number | null>(null);
   const [wide, setWide] = useState(true);
   const [listShown, setListShown] = useState(false);
@@ -281,6 +282,7 @@ export function MeetingNotes({
               [
                 ['templates', 'Templates', 'layout-2-line'],
                 ['recipes', 'Recipes', 'quill-pen-line'],
+                ['models', 'Models', 'cpu-line'],
               ] as const
             ).map(([key, name, icon]) => (
               <div key={key} className="hs-session-slot">
@@ -303,6 +305,7 @@ export function MeetingNotes({
       )}
       {pageShown && section === 'templates' && <TemplatesPage host={host} />}
       {pageShown && section === 'recipes' && <RecipesPage host={host} />}
+      {pageShown && section === 'models' && <ModelsPage host={host} />}
       {pageShown &&
         section === 'meetings' &&
         (open ? (
@@ -394,6 +397,7 @@ export function MeetingNotes({
           onEdit={(n, text) => {
             const id = open?.meeting.id;
             if (!id) return;
+            setProblem(null);
             void host
               .tool<{ lines: Line[] }>('edit_line', { id, n, text }, text ? 'Fix' : 'Delete line')
               .then(({ lines }) => setOpen((o) => (o?.meeting.id === id ? { ...o, lines } : o)), (e) => setProblem(words(e)));
@@ -401,6 +405,7 @@ export function MeetingNotes({
           onName={(speaker, name) => {
             const id = open?.meeting.id;
             if (!id) return;
+            setProblem(null);
             void host
               .tool<{ meeting: Meeting }>('name_speaker', { id, speaker, name }, 'Name')
               .then(({ meeting }) => setOpen((o) => (o?.meeting.id === id ? { ...o, meeting } : o)), (e) => setProblem(words(e)));

@@ -19,6 +19,7 @@ import { AUTO, TEMPLATES, template } from '../shared/templates.ts';
 import { Answers } from './answers.ts';
 import { Files } from './files.ts';
 import { Recording, type Live } from './recorder.ts';
+import { sentences } from './sentences.ts';
 import { findSpeakers, run } from './speakers.ts';
 import { Writer, personLines } from './writer.ts';
 
@@ -59,6 +60,9 @@ const LANGUAGES: Record<string, string> = {
 const CALL_END_MS = 30_000;
 /** How long after the last line the transcript file is written, in ms. */
 const KEEP_MS = 1000;
+/** How long after the last change of a meeting it goes into the index,
+ *  in ms, so typing does not embed the meeting again at each pause. */
+const INDEX_MS = 30_000;
 
 let ctx: AppContext;
 let files: Files;
@@ -69,6 +73,7 @@ let recording: { rec: Recording; lines: Line[]; byCall: boolean } | null = null;
 let keepTimer: ReturnType<typeof setTimeout> | null = null;
 let callEnd: ReturnType<typeof setTimeout> | null = null;
 const writing = new Map<string, AbortController>();
+const indexing = new Map<string, ReturnType<typeof setTimeout>>();
 
 const emit = (name: string, data: unknown) => void ctx.events!.emit!({ name, data, durable: false });
 
@@ -78,6 +83,21 @@ function words(e: unknown): string {
 
 async function readSettings(): Promise<void> {
   settings = (await ctx.settings.get()) as unknown as Settings;
+}
+
+/** Puts a meeting into the shared index a while after its last change. */
+function reindex(id: string): void {
+  clearTimeout(indexing.get(id));
+  indexing.set(
+    id,
+    setTimeout(() => {
+      indexing.delete(id);
+      void files
+        .meeting(id)
+        .then((meeting) => answers.put(meeting))
+        .catch((e) => ctx.log('warn', `the index did not take the meeting: ${words(e)}`));
+    }, INDEX_MS),
+  );
 }
 
 async function saveMeeting(meeting: Meeting): Promise<void> {
@@ -228,6 +248,7 @@ async function write(id: string, templateId: string): Promise<Meeting> {
     if (control.signal.aborted) return meeting;
     await files.saveNotes(id, written.markdown);
     if (!meeting.title && written.title) meeting.title = written.title;
+    reindex(id);
   } catch (e) {
     if (control.signal.aborted) return meeting;
     meeting.failed = `The notes were not written: ${words(e)}`;
@@ -258,7 +279,8 @@ async function transcribe(asset: string, name: string): Promise<Meeting> {
       const segments = (job.data as { segments?: { start: number; end: number; text: string }[] } | undefined)?.segments ?? [];
       const lines: Line[] = segments
         .filter((s) => s.text.trim())
-        .map((s, i) => ({ n: i + 1, side: 'them', start: s.start, end: s.end, text: s.text.trim() }));
+        .flatMap(sentences)
+        .map((s, i) => ({ n: i + 1, side: 'them', ...s }));
       meeting.seconds = lines.at(-1)?.end ?? 0;
       await files.saveLines(meeting, lines, settings.name);
       try {
@@ -344,7 +366,6 @@ const backend: Backend = {
     writer = new Writer(ctx);
     answers = new Answers(ctx, files, () => settings.name);
     await readSettings();
-    await answers.watch();
     ctx.settings.on('changed', (values) => {
       settings = values as unknown as Settings;
     });
@@ -394,6 +415,7 @@ const backend: Backend = {
       const { id, markdown } = input<{ id: string; markdown: string }>(raw);
       await files.meeting(id);
       await files.saveNotes(id, markdown);
+      reindex(id);
       emit('notes', { id });
       return { saved: true };
     },
@@ -418,12 +440,14 @@ const backend: Backend = {
     async save_mine(raw) {
       const { id, text } = input<{ id: string; text: string }>(raw);
       await files.saveMine(id, text);
+      reindex(id);
       return {};
     },
 
     async save_notes(raw) {
       const { id, text } = input<{ id: string; text: string }>(raw);
       await files.saveNotes(id, text);
+      reindex(id);
       return {};
     },
 
@@ -437,6 +461,7 @@ const backend: Backend = {
       if (text.trim()) lines[at] = { ...lines[at]!, text: text.trim() };
       else lines.splice(at, 1);
       await files.saveLines(meeting, lines, settings.name);
+      if (!live) reindex(id);
       return { lines };
     },
 
@@ -450,6 +475,7 @@ const backend: Backend = {
       else delete meeting.speakers;
       await saveMeeting(meeting);
       await files.saveLines(meeting, recording?.rec.meeting.id === id ? recording.lines : await files.lines(id), settings.name);
+      reindex(id);
       return { meeting };
     },
 
@@ -457,7 +483,10 @@ const backend: Backend = {
       const { id } = input<{ id: string }>(raw);
       if (recording?.rec.meeting.id === id) throw new Error('Stop the recording before you delete the meeting.');
       writing.get(id)?.abort();
+      clearTimeout(indexing.get(id));
+      indexing.delete(id);
       await files.remove(id);
+      await answers.remove(id);
       emit('meetings', null);
       return {};
     },

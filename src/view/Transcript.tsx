@@ -63,6 +63,11 @@ export function Transcript({
     window.setTimeout(() => setCopied(false), 1500);
   };
   const copyTip = tips('copy', copied ? 'Copied' : 'Copy transcript');
+  const name = () => {
+    if (!naming) return;
+    onName(naming.speaker, naming.name);
+    setNaming(null);
+  };
 
   return (
     <div className="notes-transcript">
@@ -159,25 +164,19 @@ export function Transcript({
       </div>
       {naming && (
         <Popover anchor={naming.anchor} label="Name the speaker" onDismiss={() => setNaming(null)}>
-          <form
-            className="notes-naming"
-            onSubmit={(e) => {
-              e.preventDefault();
-              onName(naming.speaker, naming.name);
-              setNaming(null);
-            }}
-          >
+          <div className="notes-naming">
             <TextInput
               aria-label="Name"
               data-autofocus
               placeholder={`Speaker ${naming.speaker.slice(1)}`}
               value={naming.name}
               onChange={(e) => setNaming({ ...naming, name: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && name()}
             />
-            <Button type="submit" size="sm" variant="primary">
+            <Button size="sm" variant="primary" onClick={name}>
               Name
             </Button>
-          </form>
+          </div>
         </Popover>
       )}
     </div>

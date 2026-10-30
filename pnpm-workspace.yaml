@@ -2,3 +2,8 @@
 # esbuild (via Vite) needs its install script to fetch its native binary.
 allowBuilds:
   esbuild: true
+# @hearthscale/app-ui pins @tiptap/markdown while its other Tiptap packages
+# follow a range; the editor works only when every Tiptap package has the
+# same version, the one the lockfile holds for the others.
+overrides:
+  '@tiptap/markdown': 3.32.1

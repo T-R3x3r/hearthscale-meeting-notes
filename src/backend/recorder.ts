@@ -12,6 +12,7 @@
  */
 import type { AppContext, CapturedPart, Listening } from '@hearthscale/app';
 import type { Line, Meeting, Side } from '../shared/meeting.ts';
+import { sentences } from './sentences.ts';
 
 export interface Levels {
   me: number;
@@ -176,17 +177,12 @@ export class Recording {
       done,
     };
     stream.on('segment', ({ text, start, end }) => {
-      const said = text.trim();
-      if (!said) return;
-      const line: Line = {
-        n: this.lines.length + 1,
-        side,
-        start: found.offset + start,
-        end: found.offset + end,
-        text: said,
-      };
-      this.lines.push(line);
-      this.hooks.line(line);
+      if (!text.trim()) return;
+      for (const said of sentences({ start: found.offset + start, end: found.offset + end, text })) {
+        const line: Line = { n: this.lines.length + 1, side, ...said };
+        this.lines.push(line);
+        this.hooks.line(line);
+      }
     });
     stream.on('partial', ({ text }) => this.hooks.partial(side, text));
     stream.on('error', ({ message, index }) => {

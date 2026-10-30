@@ -1,21 +1,22 @@
 /**
  * What the app's assistant, other apps and the composer's `@` list read of
- * the meetings: a search of the meeting files in the shared index, the
- * list of meetings, and one meeting's notes, the person's notes or its
- * transcript, the transcript in pages.
+ * the meetings: a search of the meetings in the shared index, the list of
+ * meetings, and one meeting's notes, the person's notes or its transcript,
+ * the transcript in pages.
+ *
+ * Each part of a meeting is one document of the index, under the source
+ * `meeting:<id>:<part>`. A meeting goes into the index when its notes are
+ * written or changed, not while it records, so the index's embedding model
+ * runs once for each change of a part.
  */
 import type { AppContext } from '@hearthscale/app';
-import { MEETINGS, shortClock, speakerName, type Meeting } from '../shared/meeting.ts';
+import { shortClock, speakerName, type Line, type Meeting } from '../shared/meeting.ts';
 import type { Files } from './files.ts';
 
 /** Transcript lines in one page of `read_meeting`. */
 const PAGE = 200;
 
-const FILES: Record<string, string> = {
-  'notes.md': 'notes',
-  'my-notes.md': 'my notes',
-  'transcript.md': 'transcript',
-};
+const PARTS = { notes: 'notes', mine: 'my notes', transcript: 'transcript' } as const;
 
 /** Text of a meeting file without what only the app reads: the comments
  *  after transcript lines and the marks around a model's words. */
@@ -32,10 +33,25 @@ export class Answers {
     private readonly me: () => string,
   ) {}
 
-  /** Keeps every meeting file in the shared index. */
-  async watch(): Promise<void> {
-    await this.ctx.fs.mkdir({ root: 'data', path: MEETINGS });
-    await this.ctx.index!.watch({ root: 'data', path: MEETINGS });
+  /** Puts a meeting's parts into the shared index as they are now; an
+   *  empty part leaves the index. */
+  async put(meeting: Meeting): Promise<void> {
+    const lines = (await this.files.lines(meeting.id)).sort((a, b) => a.start - b.start);
+    const texts = {
+      notes: plain(await this.files.notes(meeting.id)),
+      mine: (await this.files.mine(meeting.id)).trim(),
+      transcript: lines.map((l) => this.line(l, meeting)).join('\n'),
+    };
+    const title = meeting.title || meeting.created.slice(0, 10);
+    for (const part of Object.keys(PARTS) as (keyof typeof PARTS)[]) {
+      const source = `meeting:${meeting.id}:${part}`;
+      if (texts[part]) await this.ctx.index!.put({ source, title, pages: [{ text: texts[part] }] });
+      else await this.ctx.index!.remove(source);
+    }
+  }
+
+  async remove(id: string): Promise<void> {
+    for (const part of Object.keys(PARTS)) await this.ctx.index!.remove(`meeting:${id}:${part}`);
   }
 
   async search(query: string, limit: number) {
@@ -43,10 +59,11 @@ export class Answers {
     const meetings = new Map((await this.files.list()).map((m) => [m.id, m]));
     return {
       hits: hits.flatMap((hit) => {
-        const m = /meetings\/([^/]+)\/([^/]+)$/.exec(hit.source);
+        const m = /^meeting:([^:]+):(notes|mine|transcript)$/.exec(hit.source);
         const meeting = m ? meetings.get(m[1]!) : undefined;
         if (!m || !meeting) return [];
-        return [{ meeting: meeting.id, title: meeting.title, date: meeting.created, part: FILES[m[2]!] ?? m[2], text: plain(hit.text) }];
+        const part = PARTS[m[2] as keyof typeof PARTS];
+        return [{ meeting: meeting.id, title: meeting.title, date: meeting.created, part, text: hit.text }];
       }),
     };
   }
@@ -73,9 +90,14 @@ export class Answers {
       ...head,
       lines: lines.length,
       from,
-      text: page.map((l) => `[${shortClock(l.start)}] ${speakerName(l, meeting, this.me())}: ${l.text}`).join('\n'),
+      text: page.map((l) => this.line(l, meeting)).join('\n'),
       ...(from + PAGE < lines.length && { next: from + PAGE }),
     };
+  }
+
+  /** A transcript line as the index and the assistant read it. */
+  private line(l: Line, meeting: Meeting): string {
+    return `[${shortClock(l.start)}] ${speakerName(l, meeting, this.me())}: ${l.text}`;
   }
 
   /** The meetings whose titles hold the typed words, for the `@` list. */
