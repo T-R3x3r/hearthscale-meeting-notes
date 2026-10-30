@@ -86,11 +86,14 @@ export function SidePanel({
     window.setTimeout(() => setCopied(false), 1500);
   };
 
-  /** The conversation kept for this panel's key, if any. The store gives
-   *  back what any version of the app wrote. */
+  /** The conversation kept for this panel's key, if it still exists; the
+   *  person may have deleted it in Hearthscale while the panel was closed.
+   *  The store gives back what any version of the app wrote. */
   const stored = async () => {
     const { value } = await host.call('hearthscale/store/get', { key });
-    return typeof value === 'string' ? value : null;
+    if (typeof value !== 'string') return null;
+    const { sessions } = await host.call('hearthscale/sessions/list', {});
+    return sessions.some((s) => s.id === value) ? value : null;
   };
 
   /** Whether the person has sent nothing in the conversation yet. */
