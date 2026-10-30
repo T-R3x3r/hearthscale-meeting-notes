@@ -7,7 +7,7 @@
  * the diarization found can be given a name.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Popover, TextInput } from '@hearthscale/app-ui';
+import { Button, Popover, TextInput, useFloatingTips } from '@hearthscale/app-ui';
 import { shortClock, speakerName, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 import { IconAction } from './parts.tsx';
 
@@ -37,6 +37,7 @@ export function Transcript({
   const following = useRef(true);
   const [editing, setEditing] = useState<number | null>(null);
   const [naming, setNaming] = useState<{ speaker: string; anchor: HTMLElement; name: string } | null>(null);
+  const tips = useFloatingTips();
   const ordered = useMemo(() => [...lines].sort((a, b) => a.start - b.start || a.n - b.n), [lines]);
   const focused = useMemo(() => {
     if (focus === null) return null;
@@ -76,6 +77,7 @@ export function Transcript({
         )}
         {ordered.map((l) => {
           const name = speakerName(l, meeting, me);
+          const nameTip = tips(`name-${l.n}`, 'Name speaker');
           return (
             <div
               key={l.n}
@@ -86,13 +88,16 @@ export function Transcript({
             >
               <span className="notes-line-who">
                 {l.speaker ? (
-                  <button
-                    type="button"
-                    className="notes-line-name"
-                    onClick={(e) => setNaming({ speaker: l.speaker!, anchor: e.currentTarget, name: meeting.speakers?.[l.speaker!] ?? '' })}
-                  >
-                    {name}
-                  </button>
+                  <span className="hs-tipwrap" {...nameTip.hover}>
+                    <button
+                      type="button"
+                      className="notes-line-name"
+                      onClick={(e) => setNaming({ speaker: l.speaker!, anchor: e.currentTarget, name: meeting.speakers?.[l.speaker!] ?? '' })}
+                    >
+                      {name}
+                    </button>
+                    {nameTip.tip}
+                  </span>
                 ) : (
                   name
                 )}
