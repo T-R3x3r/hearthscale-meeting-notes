@@ -309,8 +309,9 @@ async function write(id: string, templateId: string, control = begin(id)): Promi
     if (control.signal.aborted) {
       return control.signal.reason === 'stopped' ? settle(id) : meeting;
     }
+    await ctx.log('warn', `the notes of ${id} were not written: ${words(e)}`);
     return settle(id, (m) => {
-      m.failed = `The notes could not be written. ${words(e)}`;
+      m.failed = 'The notes could not be written.';
     });
   } finally {
     end(id, control);
@@ -357,8 +358,9 @@ async function transcribe(asset: string, name: string): Promise<Meeting> {
     } catch (e) {
       end(meeting.id, control);
       if (control.signal.aborted && control.signal.reason !== 'stopped') return;
+      if (!control.signal.aborted) await ctx.log('warn', `${meeting.id} was not transcribed: ${words(e)}`);
       await settle(meeting.id, (m) => {
-        if (!control.signal.aborted) m.failed = `The recording could not be transcribed. ${words(e)}`;
+        if (!control.signal.aborted) m.failed = 'The recording could not be transcribed.';
       });
       return;
     } finally {

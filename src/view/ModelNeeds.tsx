@@ -9,16 +9,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '@hearthscale/app-ui';
 import { words, type Host } from './host.ts';
 
-const WHERE = 'in Settings > Apps > Meeting notes';
-
 /** The notice for the kinds the app has no model of, by which are missing. */
 const need = (transcription: boolean, chat: boolean) =>
   transcription && chat
-    ? `Meeting notes needs a transcription model and a chat model. Choose them ${WHERE}.`
+    ? 'Meeting notes needs a transcription model and a chat model. Choose them in'
     : transcription
-      ? `Meeting notes needs a transcription model to hear meetings. Choose one ${WHERE}.`
+      ? 'Meeting notes needs a transcription model to hear meetings. Choose one in'
       : chat
-        ? `Meeting notes needs a chat model to write notes. Choose one ${WHERE}.`
+        ? 'Meeting notes needs a chat model to write notes. Choose one in'
         : null;
 
 export function ModelNeeds({ host }: { host: Host }) {
@@ -44,7 +42,13 @@ export function ModelNeeds({ host }: { host: Host }) {
   return (
     <>
       {problem && <Notice>{problem}</Notice>}
-      {missing && <Notice>{missing}</Notice>}
+      {missing && (
+        <Notice>
+          <span>
+            {missing} <span className="notes-path">Settings &gt; Apps &gt; Meeting notes</span>.
+          </span>
+        </Notice>
+      )}
     </>
   );
 }
