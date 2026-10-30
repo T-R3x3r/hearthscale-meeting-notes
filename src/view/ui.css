@@ -315,7 +315,7 @@ body,
   display: flex;
   flex-direction: column;
   gap: var(--gap-label);
-  padding: var(--pad-chip);
+  padding: calc(var(--space) * 2) calc(var(--space) * 3);
   border-radius: var(--r-card);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
