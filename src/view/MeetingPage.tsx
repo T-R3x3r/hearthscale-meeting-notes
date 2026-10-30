@@ -29,7 +29,7 @@ import { words, type Host } from './host.ts';
 import { exported, label, plainNotes, when } from './format.ts';
 import type { Levels } from './MeetingNotes.tsx';
 import { ModelNeeds } from './ModelNeeds.tsx';
-import { IconAction, Page } from './parts.tsx';
+import { IconAction } from './parts.tsx';
 import type { PanelMode } from './SidePanel.tsx';
 
 /** What the view holds of the open meeting; `version` grows each time its
@@ -183,7 +183,8 @@ export function MeetingPage({
 
   return (
     <>
-      <Page className="notes-sheet">
+      <div className="hs-scroll hs-settings-scroll notes-page">
+        <main className="notes-sheet">
           <div className="notes-top">
             <input
               className="notes-title"
@@ -348,7 +349,8 @@ export function MeetingPage({
               onChange={(editor) => saveMine(editor.getMarkdown())}
             />
           )}
-      </Page>
+        </main>
+      </div>
 
       {quote && quoted.length > 0 && (
         <div className="hs-tooltip notes-quote" style={{ left: quote.x, top: quote.y }}>

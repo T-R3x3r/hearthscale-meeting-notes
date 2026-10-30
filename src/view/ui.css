@@ -89,7 +89,14 @@ body,
   font-size: var(--fs-md);
 }
 
+/* A meeting's column: the reading width of Hearthscale's pages, under the
+   window's own hover plates, which a settings page's content changes. */
 .notes-sheet {
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
   gap: var(--gap-row);
 }
 

@@ -1,7 +1,7 @@
 /**
  * Small parts the view's screens share: an icon button that names its
- * action in a tooltip, and a page in the tab with Hearthscale's page inset
- * and reading column.
+ * action in a tooltip, and a page in the tab with the inset and reading
+ * column of Hearthscale's settings pages.
  */
 import type { ComponentProps, MouseEvent, ReactNode } from 'react';
 import { Icon, IconButton, useFloatingTips } from '@hearthscale/app-ui';
@@ -31,10 +31,10 @@ export function IconAction({
   );
 }
 
-export function Page({ children, className }: { children: ReactNode; className?: string }) {
+export function Page({ children }: { children: ReactNode }) {
   return (
     <div className="hs-scroll hs-settings-scroll notes-page">
-      <main className={`hs-settings-content${className ? ` ${className}` : ''}`}>{children}</main>
+      <main className="hs-settings-content">{children}</main>
     </div>
   );
 }
