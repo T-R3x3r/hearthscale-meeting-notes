@@ -1,10 +1,10 @@
 /**
  * The transcript in the side panel: the computer's sound at the left and
- * the microphone at the right, each line with its speaker and time, and
- * the words still being spoken at the end. It follows the end while the
- * person has not scrolled up, and scrolls to a moment a quote in the notes
- * names. A line's words can be fixed or the line deleted, and a speaker
- * the diarization found can be given a name.
+ * the microphone at the right, each turn of a speaker in one bubble with
+ * its speaker and time, and the words still being spoken at the end. It
+ * follows the end while the person has not scrolled up, and scrolls to a
+ * moment a quote in the notes names. A turn's words can be fixed or the
+ * turn deleted, and a speaker the diarization found can be given a name.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Popover, TextInput, useFloatingTips } from '@hearthscale/app-ui';
@@ -14,6 +14,22 @@ import { IconAction } from './parts.tsx';
 /** How near the end the list must be, in pixels, to follow it. */
 const END_PX = 48;
 
+/** The longest pause, in seconds, inside one turn of a speaker. */
+const TURN_GAP_S = 3;
+
+/** The lines in order, each run of one speaker's lines a turn. */
+function turnsOf(ordered: Line[]): Line[][] {
+  const turns: Line[][] = [];
+  for (const line of ordered) {
+    const turn = turns[turns.length - 1];
+    const last = turn?.[turn.length - 1];
+    if (turn && last && last.side === line.side && last.speaker === line.speaker && line.start - last.end <= TURN_GAP_S) {
+      turn.push(line);
+    } else turns.push([line]);
+  }
+  return turns;
+}
+
 export function Transcript({
   meeting,
   lines,
@@ -21,6 +37,7 @@ export function Transcript({
   me,
   focus,
   onEdit,
+  onDelete,
   onName,
 }: {
   meeting: Meeting;
@@ -28,8 +45,10 @@ export function Transcript({
   partial: Record<Side, string>;
   me: string;
   focus: number | null;
-  /** Fixes a line's words; empty words delete the line. */
+  /** Fixes a line's words. */
   onEdit: (n: number, text: string) => void;
+  /** Deletes lines by their numbers. */
+  onDelete: (ns: number[]) => void;
   /** Names a speaker; an empty name takes the name away. */
   onName: (speaker: string, name: string) => void;
 }) {
@@ -39,6 +58,7 @@ export function Transcript({
   const [naming, setNaming] = useState<{ speaker: string; anchor: HTMLElement; name: string } | null>(null);
   const tips = useFloatingTips();
   const ordered = useMemo(() => [...lines].sort((a, b) => a.start - b.start || a.n - b.n), [lines]);
+  const turns = useMemo(() => turnsOf(ordered), [ordered]);
   const focused = useMemo(() => {
     if (focus === null) return null;
     let best: Line | null = null;
@@ -62,6 +82,13 @@ export function Transcript({
     setNaming(null);
   };
 
+  /** Keeps a line's changed words; empty words delete the line. */
+  const keep = (line: Line, text: string) => {
+    if (text === line.text) return;
+    if (text.trim()) onEdit(line.n, text);
+    else onDelete([line.n]);
+  };
+
   return (
     <div className="notes-transcript">
       <div
@@ -75,57 +102,86 @@ export function Transcript({
         {ordered.length === 0 && !partial.me && !partial.them && (
           <span className="notes-lines-empty">No transcript yet</span>
         )}
-        {ordered.map((l) => {
-          const name = speakerName(l, meeting, me);
-          const nameTip = tips(`name-${l.n}`, 'Name speaker');
+        {turns.map((turn) => {
+          const first = turn[0]!;
+          const who = speakerName(first, meeting, me);
+          const nameTip = tips(`name-${first.n}`, 'Name speaker');
+          const several = turn.length > 1;
           return (
             <div
-              key={l.n}
-              data-line={l.n}
-              data-side={l.side}
-              data-focus={focused?.n === l.n ? 'true' : undefined}
+              key={first.n}
+              data-side={first.side}
+              data-focus={focused && turn.includes(focused) ? 'true' : undefined}
               className="notes-line"
             >
               <span className="notes-line-who">
-                {l.speaker ? (
+                {first.speaker ? (
                   <span className="hs-tipwrap" {...nameTip.hover}>
                     <button
                       type="button"
                       className="notes-line-name"
-                      onClick={(e) => setNaming({ speaker: l.speaker!, anchor: e.currentTarget, name: meeting.speakers?.[l.speaker!] ?? '' })}
+                      onClick={(e) =>
+                        setNaming({ speaker: first.speaker!, anchor: e.currentTarget, name: meeting.speakers?.[first.speaker!] ?? '' })
+                      }
                     >
-                      {name}
+                      {who}
                     </button>
                     {nameTip.tip}
                   </span>
                 ) : (
-                  name
+                  who
                 )}
-                <span className="notes-line-time">{shortClock(l.start)}</span>
+                <span className="notes-line-time">{shortClock(first.start)}</span>
                 <span className="hs-flex-spacer" />
                 <span className="notes-line-acts">
-                  <IconAction name="Edit line" icon="pencil-line" size="sm" onClick={() => setEditing(l.n)} />
-                  <IconAction name="Delete line" icon="delete-bin-line" size="sm" onClick={() => onEdit(l.n, '')} />
+                  <IconAction
+                    name={several ? 'Edit lines' : 'Edit line'}
+                    icon="pencil-line"
+                    size="sm"
+                    onClick={() => setEditing(first.n)}
+                  />
+                  <IconAction
+                    name={several ? 'Delete lines' : 'Delete line'}
+                    icon="delete-bin-line"
+                    size="sm"
+                    onClick={() => onDelete(turn.map((l) => l.n))}
+                  />
                 </span>
               </span>
-              {editing === l.n ? (
-                <TextInput
-                  aria-label="Words"
-                  autoFocus
-                  defaultValue={l.text}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      onEdit(l.n, e.currentTarget.value);
-                      setEditing(null);
-                    } else if (e.key === 'Escape') setEditing(null);
-                  }}
+              {editing === first.n ? (
+                <div
+                  className="notes-line-edit"
                   onBlur={(e) => {
-                    if (e.currentTarget.value !== l.text) onEdit(l.n, e.currentTarget.value);
-                    setEditing(null);
+                    if (!e.currentTarget.contains(e.relatedTarget)) setEditing(null);
                   }}
-                />
+                >
+                  {turn.map((l, i) => (
+                    <TextInput
+                      key={l.n}
+                      aria-label="Words"
+                      autoFocus={i === 0}
+                      defaultValue={l.text}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') setEditing(null);
+                        if (e.key !== 'Enter') return;
+                        keep(l, e.currentTarget.value);
+                        const inputs = [...(e.currentTarget.closest('.notes-line-edit')?.querySelectorAll('input') ?? [])];
+                        const next = inputs[inputs.indexOf(e.currentTarget) + 1];
+                        if (next) next.focus();
+                        else setEditing(null);
+                      }}
+                      onBlur={(e) => keep(l, e.currentTarget.value)}
+                    />
+                  ))}
+                </div>
               ) : (
-                <span className="notes-line-text">{l.text}</span>
+                <span className="notes-line-text">
+                  {turn.map((l) => (
+                    <span key={l.n} data-line={l.n}>
+                      {l.text}{' '}
+                    </span>
+                  ))}
+                </span>
               )}
             </div>
           );

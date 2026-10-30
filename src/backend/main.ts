@@ -121,6 +121,18 @@ async function saveMeeting(meeting: Meeting): Promise<void> {
   emit('meeting', meeting);
 }
 
+/** Changes a meeting's transcript, the live one while it records, and
+ *  saves it; answers the lines after the change. */
+async function changeLines(id: string, change: (lines: Line[]) => void): Promise<{ lines: Line[] }> {
+  const live = recording?.rec.meeting.id === id ? recording : null;
+  const meeting = live ? live.rec.meeting : await files.meeting(id);
+  const lines = live ? live.lines : await files.lines(id);
+  change(lines);
+  await files.saveLines(meeting, lines, settings.name);
+  if (!live) reindex(id);
+  return { lines };
+}
+
 function keepLines(): void {
   if (keepTimer) return;
   keepTimer = setTimeout(() => {
@@ -539,16 +551,18 @@ const backend: Backend = {
 
     async edit_line(raw) {
       const { id, n, text } = input<{ id: string; n: number; text: string }>(raw);
-      const live = recording?.rec.meeting.id === id ? recording : null;
-      const meeting = live ? live.rec.meeting : await files.meeting(id);
-      const lines = live ? live.lines : await files.lines(id);
-      const at = lines.findIndex((l) => l.n === n);
-      if (at < 0) throw new Error('This line is no longer in the transcript.');
-      if (text.trim()) lines[at] = { ...lines[at]!, text: text.trim() };
-      else lines.splice(at, 1);
-      await files.saveLines(meeting, lines, settings.name);
-      if (!live) reindex(id);
-      return { lines };
+      return changeLines(id, (lines) => {
+        const at = lines.findIndex((l) => l.n === n);
+        if (at < 0) throw new Error('This line is no longer in the transcript.');
+        lines[at] = { ...lines[at]!, text: text.trim() };
+      });
+    },
+
+    async delete_lines(raw) {
+      const { id, lines: gone } = input<{ id: string; lines: number[] }>(raw);
+      return changeLines(id, (lines) => {
+        for (let at = lines.length - 1; at >= 0; at--) if (gone.includes(lines[at]!.n)) lines.splice(at, 1);
+      });
     },
 
     async name_speaker(raw) {

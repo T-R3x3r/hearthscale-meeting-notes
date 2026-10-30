@@ -362,6 +362,13 @@ body,
   overflow-wrap: anywhere;
 }
 
+/* A turn's lines while their words are fixed: one field each. */
+.notes-line-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-label);
+}
+
 .notes-line-acts {
   display: inline-flex;
   gap: var(--gap-label);

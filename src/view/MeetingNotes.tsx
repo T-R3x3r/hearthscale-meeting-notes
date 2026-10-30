@@ -477,7 +477,15 @@ export function MeetingNotes({
             if (!id) return;
             setProblem(null);
             void host
-              .tool<{ lines: Line[] }>('edit_line', { id, n, text }, text ? 'Fix' : 'Delete line')
+              .tool<{ lines: Line[] }>('edit_line', { id, n, text }, 'Edit line')
+              .then(({ lines }) => setOpen((o) => (o?.meeting.id === id ? { ...o, lines } : o)), (e) => setProblem(words(e)));
+          }}
+          onDelete={(ns) => {
+            const id = open?.meeting.id;
+            if (!id) return;
+            setProblem(null);
+            void host
+              .tool<{ lines: Line[] }>('delete_lines', { id, lines: ns }, 'Delete lines')
               .then(({ lines }) => setOpen((o) => (o?.meeting.id === id ? { ...o, lines } : o)), (e) => setProblem(words(e)));
           }}
           onName={(speaker, name) => {

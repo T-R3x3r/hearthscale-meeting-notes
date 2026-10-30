@@ -37,6 +37,7 @@ export function SidePanel({
   me,
   focus,
   onEdit,
+  onDelete,
   onName,
 }: {
   host: Host;
@@ -52,6 +53,7 @@ export function SidePanel({
   me: string;
   focus: number | null;
   onEdit: (n: number, text: string) => void;
+  onDelete: (ns: number[]) => void;
   onName: (speaker: string, name: string) => void;
 }) {
   const place = useRef<HTMLDivElement | null>(null);
@@ -211,6 +213,7 @@ export function SidePanel({
           me={me}
           focus={focus}
           onEdit={onEdit}
+          onDelete={onDelete}
           onName={onName}
         />
       ) : (

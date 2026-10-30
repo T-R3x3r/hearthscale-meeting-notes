@@ -2,7 +2,7 @@
  * Who spoke when, after the meeting. A diarization job hears the sound of
  * one side, joined across the meeting's pauses into one recording so that
  * a speaker keeps one number, and each line of that side takes the speaker
- * whose turns cover most of it.
+ * whose turns cover most of it, or the speaker of the nearest turn.
  *
  * The side is the computer's sound when it carried a line, as the people
  * on the far side of a call share it; else the microphone, as in a meeting
@@ -107,8 +107,14 @@ async function recording(
   return { asset: await ctx.assets.put(wav(whole), 'audio/wav', 'speakers.wav'), joined: true, pieces };
 }
 
-/** Gives the lines of one side their speakers when the diarization job
- *  finds at least `least` of them; answers whether it did. */
+/** The turn closest in time to a line that no turn covers. */
+function nearest(turns: Turn[], line: Line): Turn {
+  const gap = (t: Turn) => Math.max(t.start - line.end, line.start - t.end);
+  return turns.reduce((best, t) => (gap(t) < gap(best) ? t : best));
+}
+
+/** Gives every line of one side a speaker when the diarization job finds
+ *  at least `least` of them; answers whether it did. */
 export async function findSpeakers(
   ctx: AppContext,
   sound: Sound[],
@@ -136,8 +142,7 @@ export async function findSpeakers(
         if (overlap > 0) cover.set(t.speaker, (cover.get(t.speaker) ?? 0) + overlap);
       }
       const best = [...cover.entries()].sort((a, b) => b[1] - a[1])[0];
-      if (best) line.speaker = `s${best[0]}`;
-      else delete line.speaker;
+      line.speaker = `s${best ? best[0] : nearest(turns, line).speaker}`;
     }
     return true;
   } finally {

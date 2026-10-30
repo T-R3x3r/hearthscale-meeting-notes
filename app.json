@@ -429,7 +429,7 @@
     {
       "name": "edit_line",
       "title": "Edit transcript line",
-      "description": "Changes the words of one transcript line, or deletes the line when the text is empty.",
+      "description": "Changes the words of one transcript line.",
       "input": {
         "type": "object",
         "properties": {
@@ -441,13 +441,45 @@
             "minimum": 1
           },
           "text": {
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
           }
         },
         "required": [
           "id",
           "n",
           "text"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "delete_lines",
+      "title": "Delete transcript lines",
+      "description": "Deletes lines of a meeting's transcript.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "id",
+          "lines"
         ],
         "additionalProperties": false
       },
