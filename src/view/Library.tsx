@@ -78,6 +78,7 @@ export function TemplatesPage({
 
   const mine = viewing !== null && own.some((t) => t.id === viewing.id);
   const useWhy = tips('use', meetings.length === 0 ? 'Record a meeting first' : undefined);
+  const saveWhy = tips('save', editing && !editing.name.trim() ? 'Add a name' : undefined);
 
   return (
     <Page>
@@ -135,9 +136,12 @@ export function TemplatesPage({
             <div className="notes-form-actions">
               <span className="hs-flex-spacer" />
               <Button onClick={() => setEditing(null)}>Cancel</Button>
-              <Button variant="primary" disabled={!editing.name.trim()} onClick={() => void save()}>
-                Save
-              </Button>
+              <span className="hs-tipwrap" {...saveWhy.hover}>
+                <Button variant="primary" disabled={!editing.name.trim()} onClick={() => void save()}>
+                  Save
+                </Button>
+                {saveWhy.tip}
+              </span>
             </div>
           </div>
         </>
@@ -280,6 +284,9 @@ export function RequestsPage({ host }: { host: Host }) {
 
   const own = all.filter((r) => r.name.startsWith(OWN));
   const mine = viewing !== null && viewing.name.startsWith(OWN);
+  const tips = useFloatingTips();
+  const missing = editing ? [!editing.title.trim() && 'a name', !editing.text.trim() && 'a request'].filter(Boolean) : [];
+  const saveWhy = tips('save', missing.length > 0 ? `Add ${missing.join(' and ')}` : undefined);
 
   const save = async () => {
     if (!editing) return;
@@ -329,9 +336,12 @@ export function RequestsPage({ host }: { host: Host }) {
             <div className="notes-form-actions">
               <span className="hs-flex-spacer" />
               <Button onClick={() => setEditing(null)}>Cancel</Button>
-              <Button variant="primary" disabled={!editing.title.trim() || !editing.text.trim()} onClick={() => void save()}>
-                Save
-              </Button>
+              <span className="hs-tipwrap" {...saveWhy.hover}>
+                <Button variant="primary" disabled={!editing.title.trim() || !editing.text.trim()} onClick={() => void save()}>
+                  Save
+                </Button>
+                {saveWhy.tip}
+              </span>
             </div>
           </div>
         </>

@@ -167,6 +167,7 @@ export function MeetingPage({
   const tips = useFloatingTips();
   const recordWhy = tips('record-why', otherLive ? 'Another meeting is recording' : undefined);
   const tellTip = tips('tell', told ? 'Copied' : 'Copy a line that says you take notes');
+  const copyWhy = tips('copy', !opened.notes && !opened.mine ? 'No notes yet' : undefined);
   const showMics = async (anchor: MenuAnchor) => {
     const { devices, chosen } = await host.tool<{ devices: string[]; chosen: string }>('microphones');
     setMics({ anchor, devices, chosen });
@@ -403,15 +404,18 @@ export function MeetingPage({
       )}
       {more && (
         <MenuSurface anchor={more} onDismiss={() => setMore(null)}>
-          <MItem
-            icon={<Icon name="file-copy-line" size={14} />}
-            label="Copy notes"
-            disabled={!opened.notes && !opened.mine}
-            onClick={() => {
-              setMore(null);
-              void copyNotes().catch(fail);
-            }}
-          />
+          <span className="hs-tipwrap" {...copyWhy.hover}>
+            <MItem
+              icon={<Icon name="file-copy-line" size={14} />}
+              label="Copy notes"
+              disabled={!opened.notes && !opened.mine}
+              onClick={() => {
+                setMore(null);
+                void copyNotes().catch(fail);
+              }}
+            />
+            {copyWhy.tip}
+          </span>
           <MItem
             icon={<Icon name="download-2-line" size={14} />}
             label="Export meeting"
