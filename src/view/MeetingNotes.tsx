@@ -266,7 +266,7 @@ export function MeetingNotes({
           <div
             role="button"
             tabIndex={0}
-            className={`hs-plugrow hs-inktext hs-app-row${atStart ? ' hs-boxsel' : ''}`}
+            className={`hs-plugrow hs-inktext hs-app-row notes-app-row${atStart ? ' hs-boxsel' : ''}`}
             onClick={home}
             onKeyDown={(e) => pressed(e) && home()}
           >

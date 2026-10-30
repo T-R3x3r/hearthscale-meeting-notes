@@ -41,10 +41,21 @@ body,
   flex: none;
 }
 
-/* The rows under the meetings keep the inset the meetings' list has. */
+/* The app's row at the sidebar's top keeps the columns of the rows under
+   it: the width of their plates, their marks, their words and their
+   actions. */
+.notes .notes-app-row {
+  gap: calc(var(--space) * 1.5);
+  margin-right: var(--pad-sidebar);
+  padding: 0 var(--space);
+}
+
+/* The rows under the meetings keep the inset and the step of the
+   meetings' list. */
 .notes-library {
   display: flex;
   flex-direction: column;
+  gap: calc(var(--space) * 1.25);
   padding-right: var(--pad-sidebar);
 }
 
