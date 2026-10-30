@@ -86,6 +86,28 @@ const NEXT =
 
 const tokens = (text: string) => Math.ceil(text.length / CHARS_PER_TOKEN);
 
+/** The words the meeting's own words treat as names: those written with a
+ *  capital where no sentence starts, and those never written in lower
+ *  case. */
+function properWords(texts: string[]): Set<string> {
+  const proper = new Set<string>();
+  const capital = new Set<string>();
+  const lower = new Set<string>();
+  for (const text of texts) {
+    for (const [word] of text.matchAll(/(?<!^|[.!?:]\s+|[\p{L}\p{N}'’])\p{Lu}[\p{Ll}\p{M}]+/gmu)) proper.add(word);
+    for (const [word] of text.matchAll(/\p{Lu}[\p{Ll}\p{M}]+/gu)) capital.add(word);
+    for (const [word] of text.matchAll(/(?<![\p{L}\p{N}])\p{Ll}[\p{Ll}\p{M}]*/gu)) lower.add(word);
+  }
+  for (const word of capital) if (!lower.has(word.toLowerCase())) proper.add(word);
+  return proper;
+}
+
+/** A heading in sentence case: a word after the first that is capitalized
+ *  only as a title capitalizes it goes to lower case. */
+function sentenceCase(heading: string, proper: Set<string>): string {
+  return heading.replace(/(?<=\S\s+)\p{Lu}[\p{Ll}\p{M}]+/gu, (word) => (proper.has(word) ? word : word.toLowerCase()));
+}
+
 /** The person's notes as separate lines, without list marks or heading
  *  marks, which the notes give back word for word. */
 export function personLines(mine: string): string[] {
@@ -181,7 +203,8 @@ export class Writer {
     if (template.sections.length === 0) {
       return (
         'Choose two to five short headings for the topics of this meeting, and put under them what was said and ' +
-        'decided. Tasks go only in "next", never in a section.'
+        'decided. Write each heading in sentence case: only its first word and names start with a capital letter. ' +
+        'Tasks go only in "next", never in a section.'
       );
     }
     const list = template.sections.map((s, i) => `${i + 1}. ${s.heading}: ${s.guide}`).join('\n');
@@ -269,7 +292,7 @@ export class Writer {
       { type: 'object', properties, required, additionalProperties: false },
       signal,
     );
-    const sections = this.headings(brief.template, answer.sections.map((s) => s.heading)).map((heading, i) => ({
+    const sections = this.headings(brief, answer.sections.map((s) => s.heading)).map((heading, i) => ({
       heading,
       points: answer.sections[i]?.points ?? [],
     }));
@@ -390,7 +413,7 @@ export class Writer {
       { type: 'object', properties, required, additionalProperties: false },
       signal,
     );
-    const headings = this.headings(brief.template, answer.sections.map((s) => s.heading));
+    const headings = this.headings(brief, answer.sections.map((s) => s.heading));
     const sections = headings.map((heading, i) => ({
       heading,
       points: (answer.sections[i]?.points ?? []).map((n) => points[n - 1]).filter((p): p is Point => !!p),
@@ -401,10 +424,14 @@ export class Writer {
   }
 
   /** A template's headings as it names them; Auto's as the model wrote
-   *  them. */
-  private headings(template: Template, written: string[]): string[] {
-    if (template.sections.length > 0) return template.sections.map((s) => s.heading);
-    const kept = written.map((h) => h.trim()).filter((h) => h.length > 0);
+   *  them, in sentence case. */
+  private headings(brief: Brief, written: string[]): string[] {
+    if (brief.template.sections.length > 0) return brief.template.sections.map((s) => s.heading);
+    const proper = properWords([...brief.lines.map((l) => l.text), brief.mine]);
+    for (const name of [brief.me, ...Object.values(brief.meeting.speakers ?? {})]) {
+      for (const word of name.split(/\s+/)) proper.add(word);
+    }
+    const kept = written.map((h) => sentenceCase(h.trim(), proper)).filter((h) => h.length > 0);
     return kept.length > 0 ? kept : ['Notes'];
   }
 
