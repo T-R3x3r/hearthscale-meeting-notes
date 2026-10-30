@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, EmptyState, Icon, Notice, ShellConfirm, useFloatingTips } from '@hearthscale/app-ui';
-import type { Line, Meeting, Side } from '../shared/meeting.ts';
+import { BUSY, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
 import { MeetingPage, type Opened } from './MeetingPage.tsx';
@@ -76,6 +76,16 @@ export function MeetingNotes({
     [host],
   );
 
+  /** Reads the open meeting's transcript again while the app works on it,
+   *  and leaves the editors as they are. */
+  const refresh = useCallback(
+    async (id: string) => {
+      const got = await host.tool<{ meeting: Meeting; lines: Line[] }>('meeting', { id });
+      setOpen((o) => (o && o.meeting.id === id ? { ...o, meeting: got.meeting, lines: got.lines } : o));
+    },
+    [host],
+  );
+
   const reload = useCallback(async () => {
     setList((await host.tool<{ meetings: Meeting[] }>('meetings')).meetings);
   }, [host]);
@@ -97,10 +107,11 @@ export function MeetingNotes({
         if (meeting.id !== openId.current) return;
         setOpen((o) => {
           if (!o) return o;
-          if (o.meeting.state === 'writing' && meeting.state === 'done') {
+          if (BUSY.includes(o.meeting.state) && meeting.state === 'done') {
             void show(meeting.id);
             return o;
           }
+          if (BUSY.includes(meeting.state)) void refresh(meeting.id).catch((e) => setProblem(words(e)));
           return { ...o, meeting };
         });
       }),
@@ -125,7 +136,7 @@ export function MeetingNotes({
       }),
     ];
     return () => offs.forEach((off) => off());
-  }, [host, reload, show]);
+  }, [host, refresh, reload, show]);
 
   const tabTitle =
     section === 'templates'

@@ -795,7 +795,7 @@
     {
       "name": "write_notes",
       "title": "Write notes",
-      "description": "Writes a meeting's notes again with a meeting type, by its template id.",
+      "description": "Starts writing a meeting's notes again with a meeting type, by its template id.",
       "input": {
         "type": "object",
         "properties": {
@@ -814,7 +814,28 @@
       },
       "mutating": true,
       "outbound": false,
-      "timeoutMs": 1800000,
+      "visibility": [
+        "app"
+      ]
+    },
+    {
+      "name": "stop_work",
+      "title": "Stop",
+      "description": "Stops the transcription, the speaker search or the notes of a meeting while they run.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "mutating": true,
+      "outbound": false,
       "visibility": [
         "app"
       ]

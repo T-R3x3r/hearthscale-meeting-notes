@@ -13,9 +13,9 @@
  * `list_meetings` and `read_meeting`, which other apps can call too, and
  * changes notes through `set_notes`.
  */
-import type { AppContext, Backend, ToolRun } from '@hearthscale/app';
-import type { Line, Meeting, Side } from '../shared/meeting.ts';
-import { AUTO, TEMPLATES, template } from '../shared/templates.ts';
+import type { AppContext, Backend } from '@hearthscale/app';
+import type { Line, Meeting, MeetingState, Side } from '../shared/meeting.ts';
+import { AUTO, TEMPLATES, template, type Template } from '../shared/templates.ts';
 import { Answers } from './answers.ts';
 import { Files } from './files.ts';
 import { Recording, type Live } from './recorder.ts';
@@ -72,7 +72,10 @@ let settings: Settings;
 let recording: { rec: Recording; lines: Line[]; byCall: boolean } | null = null;
 let keepTimer: ReturnType<typeof setTimeout> | null = null;
 let callEnd: ReturnType<typeof setTimeout> | null = null;
-const writing = new Map<string, AbortController>();
+/** The work under way on each meeting after it ends. It is aborted with
+ *  the reason `stopped` when the person stops it, `replaced` when newer
+ *  work on the meeting starts, and `deleted` with the meeting. */
+const work = new Map<string, AbortController>();
 const indexing = new Map<string, ReturnType<typeof setTimeout>>();
 
 const emit = (name: string, data: unknown) => void ctx.events.emit({ name, data, durable: false });
@@ -197,48 +200,92 @@ async function finish(reason?: string): Promise<void> {
   if (keepTimer) clearTimeout(keepTimer);
   keepTimer = null;
   if (reason) meeting.stopped = reason;
-  meeting.state = 'writing';
   await files.saveLines(meeting, lines, settings.name);
-  await saveMeeting(meeting);
+  const control = begin(meeting.id);
+  delete meeting.since;
+  await step(meeting, 'speakers');
   emit('live', null);
   try {
-    if (await findSpeakers(ctx, rec.sound, lines, 2)) {
+    if (await findSpeakers(ctx, rec.sound, lines, 2, control.signal)) {
       await files.saveLines(meeting, lines, settings.name);
       emit('meeting', meeting);
     }
   } catch (e) {
-    await ctx.log('warn', `the speakers were not found: ${words(e)}`);
+    if (!control.signal.aborted) await ctx.log('warn', `the speakers were not found: ${words(e)}`);
   } finally {
     for (const s of rec.sound) await ctx.assets.release(s.asset);
   }
-  await write(meeting.id, meeting.template ?? defaultTemplate());
+  if (control.signal.aborted) {
+    end(meeting.id, control);
+    if (control.signal.reason === 'stopped') await settle(meeting.id);
+    return;
+  }
+  await write(meeting.id, meeting.template ?? defaultTemplate(), control);
+}
+
+/** Starts the work on a meeting; the work under way on it ends as
+ *  replaced. */
+function begin(id: string): AbortController {
+  work.get(id)?.abort('replaced');
+  const control = new AbortController();
+  work.set(id, control);
+  return control;
+}
+
+function end(id: string, control: AbortController): void {
+  if (work.get(id) === control) work.delete(id);
+}
+
+/** Moves a meeting to a step of its work, timed from when the work began. */
+async function step(meeting: Meeting, state: MeetingState): Promise<void> {
+  meeting.state = state;
+  meeting.since ??= new Date().toISOString();
+  await saveMeeting(meeting);
+}
+
+/** Ends the work on a meeting, on the meeting as its file holds it now, so
+ *  a title or a speaker's name given meanwhile stays. */
+async function settle(id: string, change: (meeting: Meeting) => void = () => undefined): Promise<Meeting> {
+  const meeting = await files.meeting(id);
+  change(meeting);
+  meeting.state = 'done';
+  delete meeting.since;
+  await saveMeeting(meeting);
+  return meeting;
+}
+
+/** A meeting type by its id, the app's or the person's own. */
+async function shapeOf(id: string): Promise<Template> {
+  const shape = template(id) ?? (await files.templates()).find((t) => t.id === id);
+  if (!shape) throw new Error('This meeting type no longer exists.');
+  return shape;
 }
 
 function defaultTemplate(): string {
   return TEMPLATES.find((t) => t.name === settings.template)?.id ?? AUTO;
 }
 
-/** Writes a meeting's notes with a template, one writing at a time for
- *  each meeting; a meeting with no words and no notes of the person's gets
- *  none. */
-async function write(id: string, templateId: string): Promise<Meeting> {
-  writing.get(id)?.abort();
-  const control = new AbortController();
-  writing.set(id, control);
+/** Writes a meeting's notes with a meeting type, as the meeting's work or
+ *  as the last step of it; a meeting with no words and no notes of the
+ *  person's gets none. */
+async function write(id: string, templateId: string, control = begin(id)): Promise<Meeting> {
+  let shape: Template;
+  try {
+    shape = await shapeOf(templateId);
+  } catch (e) {
+    end(id, control);
+    throw e;
+  }
   const meeting = await files.meeting(id);
-  const shape = template(templateId) ?? (await files.templates()).find((t) => t.id === templateId);
-  if (!shape) throw new Error('This meeting type no longer exists.');
   const lines = await files.lines(id);
   const mine = await files.mine(id);
   delete meeting.failed;
   if (lines.length === 0 && personLines(mine).length === 0) {
-    meeting.state = 'done';
-    await saveMeeting(meeting);
-    return meeting;
+    end(id, control);
+    return settle(id, (m) => delete m.failed);
   }
-  meeting.state = 'writing';
   meeting.template = shape.id;
-  await saveMeeting(meeting);
+  await step(meeting, 'writing');
   try {
     const written = await writer.write(
       {
@@ -252,19 +299,22 @@ async function write(id: string, templateId: string): Promise<Meeting> {
       },
       control.signal,
     );
-    if (control.signal.aborted) return meeting;
+    if (control.signal.aborted) throw control.signal.reason;
     await files.saveNotes(id, written.markdown);
-    if (!meeting.title && written.title) meeting.title = written.title;
     reindex(id);
+    return settle(id, (m) => {
+      if (!m.title && written.title) m.title = written.title;
+    });
   } catch (e) {
-    if (control.signal.aborted) return meeting;
-    meeting.failed = `The notes could not be written. ${words(e)}`;
+    if (control.signal.aborted) {
+      return control.signal.reason === 'stopped' ? settle(id) : meeting;
+    }
+    return settle(id, (m) => {
+      m.failed = `The notes could not be written. ${words(e)}`;
+    });
   } finally {
-    if (writing.get(id) === control) writing.delete(id);
+    end(id, control);
   }
-  meeting.state = 'done';
-  await saveMeeting(meeting);
-  return meeting;
 }
 
 /** Makes a meeting from a recording the person gave: its transcript from a
@@ -272,17 +322,22 @@ async function write(id: string, templateId: string): Promise<Meeting> {
  *  go once it is transcribed. */
 async function transcribe(asset: string, name: string): Promise<Meeting> {
   const meeting = await files.create(name, new Date());
-  meeting.state = 'writing';
-  await saveMeeting(meeting);
+  const control = begin(meeting.id);
+  await step(meeting, 'transcribing');
   void (async () => {
     try {
       const language = LANGUAGES[settings.language];
       const hint = hintWords();
-      const job = await run(ctx, 'transcription', {
-        audio: asset,
-        ...(language && { language }),
-        ...(hint.length > 0 && { words: hint }),
-      });
+      const job = await run(
+        ctx,
+        'transcription',
+        {
+          audio: asset,
+          ...(language && { language }),
+          ...(hint.length > 0 && { words: hint }),
+        },
+        control.signal,
+      );
       const segments = (job.data as { segments?: { start: number; end: number; text: string }[] } | undefined)?.segments ?? [];
       const lines: Line[] = segments
         .filter((s) => s.text.trim())
@@ -290,23 +345,31 @@ async function transcribe(asset: string, name: string): Promise<Meeting> {
         .map((s, i) => ({ n: i + 1, side: 'them', ...s }));
       meeting.seconds = lines.at(-1)?.end ?? 0;
       await files.saveLines(meeting, lines, settings.name);
+      await step(meeting, 'speakers');
       try {
-        if (await findSpeakers(ctx, [{ side: 'them', asset, offset: 0 }], lines, 1)) {
+        if (await findSpeakers(ctx, [{ side: 'them', asset, offset: 0 }], lines, 1, control.signal)) {
           await files.saveLines(meeting, lines, settings.name);
+          emit('meeting', meeting);
         }
       } catch (e) {
-        await ctx.log('warn', `the speakers were not found: ${words(e)}`);
+        if (!control.signal.aborted) await ctx.log('warn', `the speakers were not found: ${words(e)}`);
       }
-      await saveMeeting(meeting);
     } catch (e) {
-      meeting.failed = `The recording could not be transcribed. ${words(e)}`;
-      meeting.state = 'done';
-      await saveMeeting(meeting);
+      end(meeting.id, control);
+      if (control.signal.aborted && control.signal.reason !== 'stopped') return;
+      await settle(meeting.id, (m) => {
+        if (!control.signal.aborted) m.failed = `The recording could not be transcribed. ${words(e)}`;
+      });
       return;
     } finally {
       await ctx.assets.release(asset);
     }
-    await write(meeting.id, defaultTemplate());
+    if (control.signal.aborted) {
+      end(meeting.id, control);
+      if (control.signal.reason === 'stopped') await settle(meeting.id);
+      return;
+    }
+    await write(meeting.id, defaultTemplate(), control);
   })().catch((e) => ctx.log('error', words(e)));
   return meeting;
 }
@@ -489,7 +552,7 @@ const backend: Backend = {
     async delete_meeting(raw) {
       const { id } = input<{ id: string }>(raw);
       if (recording?.rec.meeting.id === id) throw new Error('Stop the recording before you delete the meeting.');
-      writing.get(id)?.abort();
+      work.get(id)?.abort('deleted');
       clearTimeout(indexing.get(id));
       indexing.delete(id);
       await files.remove(id);
@@ -586,10 +649,18 @@ const backend: Backend = {
       return { live: recording?.rec.live ?? null };
     },
 
-    async write_notes(raw, run: ToolRun) {
+    async write_notes(raw) {
       const { id, template: chosen } = input<{ id: string; template: string }>(raw);
-      run.signal.addEventListener('abort', () => writing.get(id)?.abort());
-      return { meeting: await write(id, chosen) };
+      await files.meeting(id);
+      await shapeOf(chosen);
+      void write(id, chosen).catch((e) => ctx.log('warn', words(e)));
+      return {};
+    },
+
+    async stop_work(raw) {
+      const { id } = input<{ id: string }>(raw);
+      work.get(id)?.abort('stopped');
+      return {};
     },
   },
 };

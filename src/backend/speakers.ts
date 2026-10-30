@@ -57,18 +57,23 @@ function wav(pcm: Uint8Array): Uint8Array {
   return bytes;
 }
 
-/** Runs a job to its end; answers it, or rejects with why it failed. */
-export async function run(ctx: AppContext, kind: string, input: Record<string, unknown>): Promise<Job> {
+/** Runs a job to its end; answers it, or rejects with why it failed. The
+ *  signal cancels the job. */
+export async function run(ctx: AppContext, kind: string, input: Record<string, unknown>, signal: AbortSignal): Promise<Job> {
   const jobs = ctx.jobs;
   const job = await jobs.submit({ kind, input });
   return new Promise<Job>((resolve, reject) => {
     const settle = (now: Job) => {
       if (now.id !== job.id || now.status === 'queued' || now.status === 'running') return;
       stop();
+      signal.removeEventListener('abort', cancel);
       if (now.status === 'completed') resolve(now);
       else reject(new Error(now.error ?? `the ${kind} job was ${now.status}`));
     };
+    const cancel = () => void jobs.cancel(job.id).catch(() => undefined);
     const stop = jobs.on('progress', settle);
+    signal.addEventListener('abort', cancel, { once: true });
+    if (signal.aborted) cancel();
     void jobs.get(job.id).then(settle, reject);
   });
 }
@@ -104,13 +109,19 @@ async function recording(
 
 /** Gives the lines of one side their speakers when the diarization job
  *  finds at least `least` of them; answers whether it did. */
-export async function findSpeakers(ctx: AppContext, sound: Sound[], lines: Line[], least: number): Promise<boolean> {
+export async function findSpeakers(
+  ctx: AppContext,
+  sound: Sound[],
+  lines: Line[],
+  least: number,
+  signal: AbortSignal,
+): Promise<boolean> {
   const side: Side = lines.some((l) => l.side === 'them') ? 'them' : 'me';
   const parts = sound.filter((s) => s.side === side).sort((a, b) => a.offset - b.offset);
   if (parts.length === 0 || !lines.some((l) => l.side === side)) return false;
   const { asset, joined, pieces } = await recording(ctx, parts);
   try {
-    const job = await run(ctx, 'diarization', { audio: asset });
+    const job = await run(ctx, 'diarization', { audio: asset }, signal);
     const turns = ((job.data as { turns?: Turn[] } | undefined)?.turns ?? []).map((t) => {
       const piece = pieces.find((p) => t.start >= p.from && t.start < p.to) ?? pieces[pieces.length - 1]!;
       const shift = piece.offset - piece.from;

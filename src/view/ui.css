@@ -173,6 +173,20 @@ body,
   flex: 1;
 }
 
+/* The work under way after a meeting ends: its status, how long it has
+   run, and Stop. */
+.notes-work {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-stack);
+}
+
+.notes-elapsed {
+  color: var(--mut);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
 .notes-tabs {
   display: flex;
   align-items: center;

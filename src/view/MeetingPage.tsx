@@ -22,7 +22,7 @@ import {
   type MenuAnchor,
 } from '@hearthscale/app-ui';
 import { RichTextEditor } from '@hearthscale/app-ui/editor';
-import { quoteSeconds, shortClock, type Line, type Meeting } from '../shared/meeting.ts';
+import { BUSY, quoteSeconds, shortClock, type Line, type Meeting, type MeetingState } from '../shared/meeting.ts';
 import { TEMPLATES, type Template } from '../shared/templates.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
@@ -41,6 +41,13 @@ export interface Opened {
   lines: Line[];
   version: number;
 }
+
+/** What the app does after a meeting ends, as its status says it. */
+const STEPS: Partial<Record<MeetingState, string>> = {
+  transcribing: 'Transcribing…',
+  speakers: 'Finding speakers…',
+  writing: 'Writing notes…',
+};
 
 /** How long after the last keystroke a change is kept. */
 const KEEP_MS = 500;
@@ -114,10 +121,10 @@ export function MeetingPage({
     if (opened.notes) setTab('notes');
   }, [opened.version, opened.notes]);
   useEffect(() => {
-    if (!live?.since) return;
+    if (!live?.since && !meeting.since) return;
     const tick = window.setInterval(() => setNow(Date.now()), 500);
     return () => window.clearInterval(tick);
-  }, [live?.since]);
+  }, [live?.since, meeting.since]);
 
   const fail = (e: unknown) => onProblem(words(e));
   const rename = useLater((t) => void host.tool('rename', { id: meeting.id, title: t }, 'Title').catch(fail));
@@ -130,8 +137,9 @@ export function MeetingPage({
   };
 
   const seconds = live ? live.seconds + (live.since ? (now - live.since) / 1000 : 0) : meeting.seconds;
-  const writing = meeting.state === 'writing';
-  const hasNotes = opened.notes.length > 0 || writing || meeting.failed !== undefined;
+  const busy = BUSY.includes(meeting.state);
+  const hasNotes = opened.notes.length > 0 || busy || meeting.failed !== undefined;
+  const elapsed = meeting.since ? Math.max(0, (now - Date.parse(meeting.since)) / 1000) : 0;
 
   const onNotesClick = (e: MouseEvent<HTMLDivElement>) => {
     const link = (e.target as HTMLElement).closest('a');
@@ -209,7 +217,7 @@ export function MeetingPage({
             </div>
           </header>
 
-          {!writing && (
+          {!busy && (
             <div className="notes-recorder">
               {live?.state === 'recording' ? (
                 <>
@@ -291,7 +299,7 @@ export function MeetingPage({
             {meeting.unheard && <Notice>Only your microphone is recorded. {meeting.unheard}</Notice>}
             {live?.quiet && <Notice>No sound from the other side yet.</Notice>}
             {meeting.stopped && !live && <Notice>{meeting.stopped}</Notice>}
-            {meeting.failed && !writing && <Notice>{meeting.failed}</Notice>}
+            {meeting.failed && !busy && <Notice>{meeting.failed}</Notice>}
 
             {hasNotes && (
               <div className="notes-tabs">
@@ -305,12 +313,23 @@ export function MeetingPage({
                   onChange={setTab}
                 />
                 <span className="hs-flex-spacer" />
-                {writing && (
-                  <StatusWord tone="info" live>
-                    Writing notes
-                  </StatusWord>
+                {busy && (
+                  <span className="notes-work">
+                    <StatusWord tone="info" live>
+                      {STEPS[meeting.state]}
+                    </StatusWord>
+                    <span className="notes-elapsed">{shortClock(elapsed)}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={<Icon name="stop-line" size={14} />}
+                      onClick={() => act('stop_work', 'Stop', { id: meeting.id })}
+                    >
+                      Stop
+                    </Button>
+                  </span>
                 )}
-                {!writing && !live && (opened.lines.length > 0 || opened.mine) && (
+                {!busy && !live && (opened.lines.length > 0 || opened.mine) && (
                   <Button
                     icon={<Icon name="refresh-line" size={14} />}
                     trailingIcon={<Icon name="arrow-down-s-line" size={14} />}
@@ -328,7 +347,7 @@ export function MeetingPage({
             )}
 
             {tab === 'notes' && hasNotes ? (
-              writing ? null : (
+              busy ? null : (
                 <div className="notes-written" onClickCapture={onNotesClick} onMouseOver={onNotesHover} onMouseLeave={() => setQuote(null)}>
                   <RichTextEditor
                     key={`notes-${opened.version}`}

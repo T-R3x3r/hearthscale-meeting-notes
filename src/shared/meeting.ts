@@ -33,7 +33,12 @@ export interface Line {
 
 /** Where a meeting stands: before its recording, while it records or
  *  pauses, while its notes are written, and once they are there. */
-export type MeetingState = 'new' | 'recording' | 'paused' | 'writing' | 'done';
+/** `transcribing`, `speakers` and `writing` are the steps after a meeting
+ *  ends: its words, its speakers, then its notes. */
+export type MeetingState = 'new' | 'recording' | 'paused' | 'transcribing' | 'speakers' | 'writing' | 'done';
+
+/** The states in which the app works on a meeting by itself. */
+export const BUSY: MeetingState[] = ['transcribing', 'speakers', 'writing'];
 
 export interface Meeting {
   id: string;
@@ -44,6 +49,8 @@ export interface Meeting {
   /** Seconds of sound recorded. */
   seconds: number;
   state: MeetingState;
+  /** ISO time the work under way began, while the state is one of BUSY. */
+  since?: string;
   /** The template the notes were last written with. */
   template?: string;
   /** Why the recording ended before the person stopped it. */
