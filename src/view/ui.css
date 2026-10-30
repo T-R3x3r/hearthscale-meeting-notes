@@ -333,8 +333,9 @@ body,
   color: var(--bubut);
 }
 
+/* Words still being spoken. */
 .notes-line[data-partial='true'] {
-  opacity: var(--press-fade);
+  color: var(--mut);
 }
 
 /* The line a quote in the notes points at. */
