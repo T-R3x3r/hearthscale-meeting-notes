@@ -168,7 +168,8 @@ export function MeetingPage({
   const tips = useFloatingTips();
   const recordWhy = tips('record-why', otherLive ? 'Another meeting is recording' : undefined);
   const tellTip = tips('tell', told ? 'Copied' : 'Copy a line that says you take notes');
-  const copyWhy = tips('copy', !opened.notes && !opened.mine ? 'No notes yet' : undefined);
+  // The reason of an off menu item shows beside the menu, clear of its other items.
+  const copyWhy = useFloatingTips('right')('copy', !opened.notes && !opened.mine ? 'No notes yet' : undefined);
   const showMics = async (anchor: MenuAnchor) => {
     const { devices, chosen } = await host.tool<{ devices: string[]; chosen: string }>('microphones');
     setMics({ anchor, devices, chosen });
