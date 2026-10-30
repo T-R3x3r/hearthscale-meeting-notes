@@ -17,7 +17,7 @@ import { forTranscription } from './sound.ts';
 import { SidePanel, type PanelMode } from './SidePanel.tsx';
 import { RecipesPage, TemplatesPage } from './Library.tsx';
 import { IconAction } from './parts.tsx';
-import { ModelsPage } from './Models.tsx';
+import { ModelNeeds } from './ModelNeeds.tsx';
 
 /** The narrowest tab that shows the list beside the meeting. */
 const WIDE = 640;
@@ -50,7 +50,7 @@ export function MeetingNotes({
   const [picked, setPicked] = useState<{ name: string; asset: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [panel, setPanel] = useState<PanelMode | null>(first.live ? 'transcript' : null);
-  const [section, setSection] = useState<'meetings' | 'templates' | 'recipes' | 'models'>('meetings');
+  const [section, setSection] = useState<'meetings' | 'templates' | 'recipes'>('meetings');
   const [focus, setFocus] = useState<number | null>(null);
   const [wide, setWide] = useState(true);
   const [listShown, setListShown] = useState(false);
@@ -132,11 +132,9 @@ export function MeetingNotes({
       ? 'Templates'
       : section === 'recipes'
         ? 'Recipes'
-        : section === 'models'
-          ? 'Models'
-          : open
-            ? label(open.meeting, locale, timeZone)
-            : 'Meeting notes';
+        : open
+          ? label(open.meeting, locale, timeZone)
+          : 'Meeting notes';
   useEffect(() => {
     void host.request('hearthscale/ui/set-tab', { title: tabTitle });
   }, [host, tabTitle]);
@@ -310,7 +308,6 @@ export function MeetingNotes({
               [
                 ['templates', 'Templates', 'layout-2-line'],
                 ['recipes', 'Recipes', 'quill-pen-line'],
-                ['models', 'Models', 'cpu-line'],
               ] as const
             ).map(([key, name, icon]) => (
               <div key={key} className="hs-session-slot">
@@ -340,7 +337,6 @@ export function MeetingNotes({
       )}
       {pageShown && section === 'templates' && <TemplatesPage host={host} />}
       {pageShown && section === 'recipes' && <RecipesPage host={host} />}
-      {pageShown && section === 'models' && <ModelsPage host={host} />}
       {pageShown &&
         section === 'meetings' &&
         (open ? (
@@ -416,6 +412,7 @@ export function MeetingNotes({
                   </div>
                 )}
                 {problem && <Notice>{problem}</Notice>}
+                <ModelNeeds host={host} />
               </EmptyState>
             </div>
           </main>

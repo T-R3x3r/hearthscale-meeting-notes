@@ -375,24 +375,7 @@ body,
   line-height: var(--lh-body);
 }
 
-/* The models page: a model's size, the search row and a download. */
-.notes-size {
-  color: var(--mut);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.notes-search-row {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-inline);
-}
-
-.notes-search-row > .hs-input {
-  flex: 1;
-  min-width: 0;
-}
-
+/* A download's meter in a notice. */
 .notes-progress {
   display: inline-flex;
   width: calc(var(--w-sidebar) / 2);

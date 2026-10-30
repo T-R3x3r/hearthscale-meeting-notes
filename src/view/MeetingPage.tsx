@@ -28,6 +28,7 @@ import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
 import { exported, label, plainNotes, when } from './format.ts';
 import type { Levels } from './MeetingNotes.tsx';
+import { ModelNeeds } from './ModelNeeds.tsx';
 import { IconAction, Page } from './parts.tsx';
 import type { PanelMode } from './SidePanel.tsx';
 
@@ -279,6 +280,7 @@ export function MeetingPage({
           </div>
 
           {problem && <Notice>{problem}</Notice>}
+          <ModelNeeds host={host} />
           {meeting.unheard && <Notice>Only the microphone is heard: {meeting.unheard}</Notice>}
           {live?.quiet && <Notice>No sound from the other side yet.</Notice>}
           {meeting.stopped && !live && <Notice>{meeting.stopped}</Notice>}
