@@ -404,62 +404,67 @@ export function MeetingNotes({
             onProblem={setProblem}
           />
         ) : (
-          <main className="notes-page">
-            <div className="hs-empty-view">
-              <EmptyState icon={<Icon name="mic-line" size={30} />} title={list.length === 0 ? 'No meetings yet' : 'Meeting notes'}>
-                {picked ? (
-                  <div className="notes-start">
-                    <span className="notes-picked-name">{picked.name}</span>
-                    <Button variant="primary" icon={<Icon name="file-text-line" size={14} />} onClick={() => void transcribe()}>
-                      Transcribe
-                    </Button>
-                    <Button onClick={() => setPicked(null)}>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="notes-start">
-                    <Button
-                      variant="primary"
-                      icon={<Icon name="record-circle-line" size={14} />}
-                      onClick={() =>
-                        void host
-                          .tool<{ meeting: Meeting }>('record', {}, 'Record')
-                          .then(({ meeting }) => show(meeting.id), (e) => setProblem(words(e)))
-                      }
-                    >
-                      Record
-                    </Button>
-                    <Button icon={<Icon name="add-line" size={14} />} onClick={() => void create()}>
-                      New meeting
-                    </Button>
-                    <Button
-                      icon={<Icon name={uploading ? 'loader-4-line' : 'upload-2-line'} size={14} className={uploading ? 'hs-spin' : ''} />}
-                      onClick={() => fileInput.current?.click()}
-                    >
-                      Transcribe a recording
-                    </Button>
-                    <input
-                      ref={fileInput}
-                      type="file"
-                      accept="audio/*"
-                      hidden
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        e.target.value = '';
-                        if (file) void pick(file);
-                      }}
-                    />
-                    <Button icon={<Icon name="question-answer-line" size={14} />} onClick={() => setPanel('ask')}>
-                      Ask
-                    </Button>
-                  </div>
-                )}
-                {problem && <Notice>{problem}</Notice>}
-                <ModelNeeds host={host} />
-              </EmptyState>
-            </div>
-          </main>
+          <div className="hs-scroll hs-settings-scroll notes-page">
+            <main className="hs-settings-content notes-start-sheet">
+              <div className="notes-top">
+                <span className="hs-flex-spacer" />
+                <IconAction
+                  name="Ask"
+                  icon="question-answer-line"
+                  pressed={panel === 'ask'}
+                  onClick={() => setPanel(panel === 'ask' ? null : 'ask')}
+                />
+              </div>
+              <div className="hs-empty-view">
+                <EmptyState icon={<Icon name="mic-line" size={30} />} title={list.length === 0 ? 'No meetings yet' : 'No meeting open'}>
+                  {picked ? (
+                    <div className="notes-start">
+                      <span className="notes-picked-name">{picked.name}</span>
+                      <Button variant="primary" icon={<Icon name="file-text-line" size={14} />} onClick={() => void transcribe()}>
+                        Transcribe
+                      </Button>
+                      <Button onClick={() => setPicked(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="notes-start">
+                      <Button
+                        variant="primary"
+                        icon={<Icon name="record-circle-line" size={14} />}
+                        onClick={() =>
+                          void host
+                            .tool<{ meeting: Meeting }>('record', {}, 'Record')
+                            .then(({ meeting }) => show(meeting.id), (e) => setProblem(words(e)))
+                        }
+                      >
+                        Record
+                      </Button>
+                      <Button
+                        icon={<Icon name={uploading ? 'loader-4-line' : 'upload-2-line'} size={14} className={uploading ? 'hs-spin' : ''} />}
+                        onClick={() => fileInput.current?.click()}
+                      >
+                        Transcribe a recording
+                      </Button>
+                      <input
+                        ref={fileInput}
+                        type="file"
+                        accept="audio/*"
+                        hidden
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = '';
+                          if (file) void pick(file);
+                        }}
+                      />
+                    </div>
+                  )}
+                  {problem && <Notice>{problem}</Notice>}
+                  <ModelNeeds host={host} />
+                </EmptyState>
+              </div>
+            </main>
+          </div>
         ))}
       {panel && section === 'meetings' && (open || panel === 'ask') && (
         <SidePanel

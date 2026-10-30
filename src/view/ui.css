@@ -75,8 +75,20 @@ body,
   min-height: 0;
 }
 
-.notes-page > .hs-empty-view {
-  height: 100%;
+/* The start page: Ask where a meeting's page has its actions, and the
+   empty place in the rest of the height. */
+.notes-start-sheet {
+  min-height: 100%;
+}
+
+/* As tall as a meeting's title, so Ask keeps its height on both pages. */
+.notes-start-sheet > .notes-top {
+  min-height: calc(var(--fs-page) * var(--lh-body));
+}
+
+.notes-start-sheet > .hs-empty-view {
+  flex: 1;
+  height: auto;
 }
 
 .notes-start {
