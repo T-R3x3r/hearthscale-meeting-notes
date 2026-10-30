@@ -119,6 +119,11 @@ body,
   gap: var(--gap-row);
 }
 
+/* A notes page keeps room to write in, also while it is empty. */
+.notes-body .hs-rich-text {
+  min-height: calc(var(--space) * 30);
+}
+
 .notes-top {
   display: flex;
   align-items: center;

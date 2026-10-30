@@ -200,7 +200,7 @@ export function MeetingPage({
               <input
                 className="notes-title"
                 aria-label="Title"
-                placeholder={label({ ...meeting, title: '' }, locale, timeZone)}
+                placeholder="Weekly planning"
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
@@ -374,6 +374,7 @@ export function MeetingPage({
               <RichTextEditor
                 key={`mine-${opened.version}`}
                 label="My notes"
+                placeholder="Anna fixes the login bug by Wednesday"
                 content={opened.mine}
                 onChange={(editor) => saveMine(editor.getMarkdown())}
               />
