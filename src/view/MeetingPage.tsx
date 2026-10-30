@@ -202,7 +202,7 @@ export function MeetingPage({
               <input
                 className="notes-title"
                 aria-label="Title"
-                placeholder="Weekly planning"
+                placeholder="Untitled meeting"
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
