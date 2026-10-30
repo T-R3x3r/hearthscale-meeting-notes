@@ -134,11 +134,13 @@ export class Writer {
     signal: AbortSignal,
   ): Promise<T> {
     let text = '';
+    // A model that reasons first can spend its whole window on reasoning
+    // before the answer starts; the notes need none.
     for await (const delta of this.ctx.models.complete(
       {
         messages,
         format: { name, schema },
-        reasoning: 'auto',
+        reasoning: 'none',
         sampling: { temperature: 0.2 },
       },
       signal,
