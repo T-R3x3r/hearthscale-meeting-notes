@@ -1,8 +1,9 @@
 /**
  * The transcript in the side panel: the computer's sound at the left and
  * the microphone at the right, each turn of a speaker in one bubble with
- * its speaker and time, and the words still being spoken at the end. It
- * follows the end while the person has not scrolled up, and scrolls to a
+ * its speaker and time, and the words still being spoken at the end.
+ * While the meeting records, it follows the end as long as the person has
+ * not scrolled up; another meeting's opens at its start. It scrolls to a
  * moment a quote in the notes names. A turn's words can be fixed or the
  * turn deleted, and a speaker the diarization found can be given a name.
  */
@@ -66,10 +67,11 @@ export function Transcript({
     return best ?? ordered[0] ?? null;
   }, [focus, ordered]);
 
+  const recording = meeting.state === 'recording' || meeting.state === 'paused';
   useEffect(() => {
     const el = list.current;
-    if (el && following.current && focused === null) el.scrollTop = el.scrollHeight;
-  }, [ordered.length, partial.me, partial.them, focused]);
+    if (el && recording && following.current && focused === null) el.scrollTop = el.scrollHeight;
+  }, [recording, ordered.length, partial.me, partial.them, focused]);
 
   useEffect(() => {
     if (!focused) return;
