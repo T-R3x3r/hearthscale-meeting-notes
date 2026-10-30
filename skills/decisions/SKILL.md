@@ -1,5 +1,6 @@
 ---
 name: decisions
+title: List the decisions
 description: Use when the person asks what a meeting decided.
 ---
 

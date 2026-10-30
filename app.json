@@ -8,7 +8,7 @@
     "light": "assets/icon-light.svg",
     "dark": "assets/icon-dark.svg"
   },
-  "description": "Hears both sides of a meeting on this computer, shows the transcript as people speak, and writes your notes into clear notes when it ends.",
+  "description": "Hears your meetings on this computer, shows every word as people speak, and writes clear notes when each one ends.",
   "license": "MIT",
   "categories": [
     "notes",
@@ -166,7 +166,7 @@
         "words": {
           "type": "string",
           "title": "Words to know",
-          "description": "Names and terms your meetings use, separated by commas. Only some transcription models take them.",
+          "description": "Names and terms your meetings use, separated by commas. Only some transcription models use them.",
           "maxLength": 1000,
           "default": ""
         },
@@ -432,7 +432,7 @@
     },
     {
       "name": "edit_line",
-      "title": "Fix transcript line",
+      "title": "Edit transcript line",
       "description": "Changes the words of one transcript line, or deletes the line when the text is empty.",
       "input": {
         "type": "object",
@@ -581,7 +581,7 @@
     },
     {
       "name": "templates",
-      "title": "My meeting types",
+      "title": "List my meeting types",
       "description": "The person's own meeting types (note templates).",
       "input": {
         "type": "object",
@@ -673,7 +673,7 @@
     },
     {
       "name": "requests",
-      "title": "Saved requests",
+      "title": "List saved requests",
       "description": "The person's own saved requests.",
       "input": {
         "type": "object",
@@ -743,7 +743,7 @@
     },
     {
       "name": "microphones",
-      "title": "Microphones",
+      "title": "List microphones",
       "description": "The microphones of the computer and the one the person chose.",
       "input": {
         "type": "object",
@@ -780,7 +780,7 @@
     },
     {
       "name": "recording",
-      "title": "Recording",
+      "title": "Check the recording",
       "description": "The recording that runs now, if one does.",
       "input": {
         "type": "object",

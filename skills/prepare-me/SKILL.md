@@ -1,5 +1,6 @@
 ---
 name: prepare-me
+title: Prepare me
 description: Use when the person asks to prepare for a meeting with someone or about something.
 ---
 

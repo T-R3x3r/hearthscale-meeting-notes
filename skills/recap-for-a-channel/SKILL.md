@@ -1,5 +1,6 @@
 ---
 name: recap-for-a-channel
+title: Write a team recap
 description: Use when the person asks for a short recap of a meeting to post for their team.
 ---
 

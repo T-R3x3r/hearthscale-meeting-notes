@@ -1,5 +1,6 @@
 ---
 name: open-items
+title: List open items
 description: Use when the person asks what is still open across their recent meetings.
 ---
 

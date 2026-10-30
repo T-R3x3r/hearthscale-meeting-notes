@@ -1,5 +1,6 @@
 ---
 name: next-steps
+title: List the next steps
 description: Use when the person asks for the next steps or the to-dos of a meeting.
 ---
 

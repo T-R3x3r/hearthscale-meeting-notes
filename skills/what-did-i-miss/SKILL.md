@@ -1,5 +1,6 @@
 ---
 name: what-did-i-miss
+title: Catch me up
 description: Use when the person asks what they missed in a meeting that runs or just ended.
 ---
 

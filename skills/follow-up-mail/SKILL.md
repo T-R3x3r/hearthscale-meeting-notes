@@ -1,5 +1,6 @@
 ---
 name: follow-up-mail
+title: Write a follow-up mail
 description: Use when the person asks for a follow-up mail after a meeting.
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: coach-me
+title: Coach me
 description: Use when the person asks for feedback on how they did in a meeting.
 ---
 
