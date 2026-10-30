@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@hearthscale/app-ui':
-        specifier: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-ui-0.1.0.tgz
-        version: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-ui-0.1.0.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: ^0.2.0
+        version: 0.2.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react:
         specifier: ^19.3.0
         version: 19.3.1
@@ -19,8 +19,8 @@ importers:
         version: 19.3.1(react@19.3.1)
     devDependencies:
       '@hearthscale/app':
-        specifier: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-0.1.0.tgz
-        version: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-0.1.0.tgz(@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7))
+        specifier: ^0.2.0
+        version: 0.2.0(@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7))
       '@modelcontextprotocol/ext-apps':
         specifier: 1.7.5
         version: 1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7)
@@ -281,9 +281,8 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
-  '@hearthscale/app-ui@file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-ui-0.1.0.tgz':
-    resolution: {integrity: sha512-cfAY8llvJvTSUrJobzIrM9Bzc7MEwLibBw8ldv5XOMf6cwIGZJ3cHkTQD5O9HV2FEfheAHv4DZEQg7irZ8lHuw==, tarball: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-ui-0.1.0.tgz}
-    version: 0.1.0
+  '@hearthscale/app-ui@0.2.0':
+    resolution: {integrity: sha512-kyN90KANaA6VnH/c8FMXNdNa3xIpDbD/3CT0cRa7p3A/7X7/rZi0RCN8tTSjC/OXxViwf3axjylImzmuhNMWHQ==}
     peerDependencies:
       '@types/react': ^19.3.0
       react: ^19.3.0
@@ -292,9 +291,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@hearthscale/app@file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-0.1.0.tgz':
-    resolution: {integrity: sha512-oaelvDNv30c1S/43kr/26QqWl/eJmf4HVXQOZkR1Up1TxIbqjU25kdsFIOlF2A+2DhAQX6TxwS0v2ERsAMiThA==, tarball: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-0.1.0.tgz}
-    version: 0.1.0
+  '@hearthscale/app@0.2.0':
+    resolution: {integrity: sha512-+f9BGoWSCvzAgRkDJIbuIKvB2NPXyBMIRZlS2xsKFi5GpuduWD1f5DOJymkZW5OBiZVcTju+SPq1TVQrM+Ba6Q==}
     peerDependencies:
       '@modelcontextprotocol/ext-apps': ^1.7.5
     peerDependenciesMeta:
@@ -845,8 +843,8 @@ packages:
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
 
-  ansi-regex@6.4.0:
-    resolution: {integrity: sha512-KzTVk2tCWAHtYrvvvaP8bJKJq2pVinhLcGEQdtLIYPbmNGNyYe8QwNaTUYQp2J7/vIsUKt5QCqAfUkYyG9DkOw==}
+  ansi-regex@6.5.0:
+    resolution: {integrity: sha512-zhvbbbdt1kbw7EJ9OQoxmQcuaNR9P5kTj7e/YdmOSU10aHWbycofJxA6jKfoEy3vlLdctOF9ZHaxLtmSm998wQ==}
     engines: {node: '>=12'}
 
   ansi-styles@6.2.3:
@@ -2307,7 +2305,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@hearthscale/app-ui@file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-ui-0.1.0.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@hearthscale/app-ui@0.2.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@floating-ui/dom': 1.8.0
       '@tanstack/react-virtual': 3.14.14(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -2333,7 +2331,7 @@ snapshots:
       - '@types/react-dom'
       - supports-color
 
-  '@hearthscale/app@file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-0.1.0.tgz(@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7))':
+  '@hearthscale/app@0.2.0(@modelcontextprotocol/ext-apps@1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7))':
     optionalDependencies:
       '@modelcontextprotocol/ext-apps': 1.7.5(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(zod@4.6.7)
 
@@ -2884,7 +2882,7 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  ansi-regex@6.4.0: {}
+  ansi-regex@6.5.0: {}
 
   ansi-styles@6.2.3: {}
 
@@ -4240,7 +4238,7 @@ snapshots:
 
   strip-ansi@7.2.0:
     dependencies:
-      ansi-regex: 6.4.0
+      ansi-regex: 6.5.0
 
   style-to-js@1.1.21:
     dependencies:
