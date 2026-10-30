@@ -8,7 +8,6 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
-  FactRow,
   Icon,
   LinkRow,
   ListRow,
@@ -28,7 +27,7 @@ import type { Meeting } from '../shared/meeting.ts';
 import { TEMPLATES, type Template } from '../shared/templates.ts';
 import { BUILT_IN, OWN, type Request } from '../shared/requests.ts';
 import { words, type Host } from './host.ts';
-import { Field, IconAction, Page } from './parts.tsx';
+import { Back, Field, IconAction, Page } from './parts.tsx';
 
 const blankTemplate = (): Template => ({ id: '', name: '', about: '', sections: [{ heading: '', guide: '' }] });
 
@@ -154,10 +153,8 @@ export function TemplatesPage({
         </>
       ) : viewing ? (
         <>
-          <div className="notes-top">
-            <IconAction name="Meeting types" icon="arrow-left-line" onClick={() => setViewing(null)} />
-            <PageTitle>{viewing.name}</PageTitle>
-          </div>
+          <Back to="Meeting types" onPress={() => setViewing(null)} />
+          <PageTitle>{viewing.name}</PageTitle>
           {problem && <Notice>{problem}</Notice>}
           <SettingsSection first>Description</SettingsSection>
           <SettingsCard>
@@ -166,7 +163,7 @@ export function TemplatesPage({
           <SettingsSection>Sections</SettingsSection>
           <SettingsCard>
             {viewing.sections.length > 0 ? (
-              viewing.sections.map((s, i) => <FactRow key={i} label={s.heading} value={s.guide} />)
+              viewing.sections.map((s, i) => <ListRow key={i} title={s.heading} sub={s.guide} />)
             ) : (
               <ListRow title="Chosen to fit each meeting" />
             )}
@@ -361,10 +358,8 @@ export function RequestsPage({ host }: { host: Host }) {
         </>
       ) : viewing ? (
         <>
-          <div className="notes-top">
-            <IconAction name="Saved requests" icon="arrow-left-line" onClick={() => setViewing(null)} />
-            <PageTitle>{viewing.title}</PageTitle>
-          </div>
+          <Back to="Saved requests" onPress={() => setViewing(null)} />
+          <PageTitle>{viewing.title}</PageTitle>
           {problem && <Notice>{problem}</Notice>}
           <SettingsSection first>Request</SettingsSection>
           <SettingsCard>

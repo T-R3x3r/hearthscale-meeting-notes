@@ -1,10 +1,11 @@
 /**
  * Small parts the view's screens share: an icon button that names its
- * action in a tooltip, a labelled field, and a page in the tab with the
- * inset and reading column of Hearthscale's settings pages.
+ * action in a tooltip, a labelled field, the press back to a list, and a
+ * page in the tab with the inset and reading column of Hearthscale's
+ * settings pages.
  */
 import { useState, type ComponentProps, type MouseEvent, type ReactNode } from 'react';
-import { Icon, IconButton, TextInput, useFloatingTips } from '@hearthscale/app-ui';
+import { Button, Icon, IconButton, TextInput, useFloatingTips } from '@hearthscale/app-ui';
 
 export function IconAction({
   name,
@@ -58,6 +59,18 @@ export function Field({ id, label, ...rest }: { id: string; label: string } & Co
         {label}
       </label>
       <TextInput id={id} {...rest} />
+    </div>
+  );
+}
+
+/** The press back from a page to the list it was opened from, above the
+ *  page's title. */
+export function Back({ to, onPress }: { to: string; onPress: () => void }) {
+  return (
+    <div className="notes-back">
+      <Button size="sm" variant="ghost" icon={<Icon name="arrow-left-line" size={14} />} onClick={onPress}>
+        {to}
+      </Button>
     </div>
   );
 }

@@ -471,14 +471,15 @@ body,
   gap: var(--gap-inline);
 }
 
-/* A meeting type's page: its actions under its sections, and its name
-   beside the press back to the list. */
+/* A meeting type's or a request's page: its actions under its cards, and
+   the press back to the list above its title, the arrow on the column's
+   edge past the button's inset. */
 .notes-type-actions {
   margin-top: var(--gap-page);
 }
 
-.notes-top > .hs-page-title {
-  margin: 0;
+.notes-back {
+  margin-left: calc(var(--space) * -3.5);
 }
 
 /* A request's text: the box and type of the form's other fields, over
