@@ -59,10 +59,6 @@ body,
   box-shadow: var(--focus);
 }
 
-.notes :is(.hs-sidebar-rowact, .hs-session-menu-action):focus-visible {
-  border-radius: var(--r-sm);
-}
-
 /* A mark's tip shows under it. */
 .hs-tipwrap {
   position: relative;

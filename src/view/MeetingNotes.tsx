@@ -6,7 +6,7 @@
  * change by its events; the view asks for a meeting's files when it opens
  * one, and again when its notes are written or changed.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Button, EmptyState, Icon, Notice, ShellConfirm, Toast, useFloatingTips } from '@hearthscale/app-ui';
 import { BUSY, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 import type { Live } from '../backend/recorder.ts';
@@ -21,6 +21,14 @@ import { ModelNeeds } from './ModelNeeds.tsx';
 
 /** The narrowest tab that shows the list beside the meeting. */
 const WIDE = 640;
+
+/** Whether a key on a row presses it, as Enter and Space press a button;
+ *  keys on a control inside the row stay that control's. */
+function pressed(e: KeyboardEvent<HTMLElement>): boolean {
+  if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return false;
+  e.preventDefault();
+  return true;
+}
 
 export interface Levels {
   me: number;
@@ -241,7 +249,6 @@ export function MeetingNotes({
 
   const sideShown = wide || listShown;
   const pageShown = wide || !listShown;
-  const newTip = tips('new', 'New meeting');
 
   return (
     <div ref={root} className="hs-app-surface notes" data-wide={wide ? 'true' : 'false'}>
@@ -261,81 +268,56 @@ export function MeetingNotes({
             tabIndex={0}
             className={`hs-plugrow hs-inktext hs-app-row${atStart ? ' hs-boxsel' : ''}`}
             onClick={home}
-            onKeyDown={(e) => e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ') && home()}
+            onKeyDown={(e) => pressed(e) && home()}
           >
             <span className="hs-sidebar-mark">
               <Icon name="mic-line" size={16} />
             </span>
             Meeting notes
             <span className="hs-flex-spacer" />
-            <span
-              role="button"
-              tabIndex={0}
-              aria-label="New meeting"
-              className="hs-tipwrap hs-hovink hs-inkmut hs-sidebar-rowact"
+            <IconAction
+              name="New meeting"
+              icon="add-line"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 void create();
               }}
-              onKeyDown={(e) => {
-                if (e.key !== 'Enter' && e.key !== ' ') return;
-                e.stopPropagation();
-                void create();
-              }}
-              {...newTip.hover}
-            >
-              <span className="hs-sidebar-plus">
-                <Icon name="add-line" size={16} />
-              </span>
-              {newTip.tip}
-            </span>
+            />
           </div>
           <div className="hs-scroll hs-sidebar-scroll notes-list">
-            {list.map((meeting) => {
-              const del = tips(`delete-${meeting.id}`, 'Delete meeting');
-              return (
-                <div key={meeting.id} className="hs-session-slot">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${
-                      section === 'meetings' && meeting.id === open?.meeting.id ? ' hs-boxsel' : ''
-                    }`}
-                    onClick={() => void show(meeting.id)}
-                    onKeyDown={(e) => e.target === e.currentTarget && e.key === 'Enter' && void show(meeting.id)}
-                  >
-                    <span className="hs-session-mark">
-                      <Icon
-                        name={live?.meeting === meeting.id ? 'record-circle-line' : 'file-list-3-line'}
-                        size={15}
-                      />
-                    </span>
-                    <span className="hs-stitle hs-session-label">{label(meeting, locale, timeZone)}</span>
-                    <span className="hs-rowact hs-session-actions">
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        aria-label="Delete meeting"
-                        className="hs-tipwrap hs-hovink hs-inkmut hs-session-menu-action"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleting(meeting);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key !== 'Enter') return;
-                          e.stopPropagation();
-                          setDeleting(meeting);
-                        }}
-                        {...del.hover}
-                      >
-                        <Icon name="delete-bin-line" size={15} />
-                        {del.tip}
-                      </span>
-                    </span>
-                  </div>
+            {list.map((meeting) => (
+              <div key={meeting.id} className="hs-session-slot">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${
+                    section === 'meetings' && meeting.id === open?.meeting.id ? ' hs-boxsel' : ''
+                  }`}
+                  onClick={() => void show(meeting.id)}
+                  onKeyDown={(e) => pressed(e) && void show(meeting.id)}
+                >
+                  <span className="hs-session-mark">
+                    <Icon
+                      name={live?.meeting === meeting.id ? 'record-circle-line' : 'file-list-3-line'}
+                      size={15}
+                    />
+                  </span>
+                  <span className="hs-stitle hs-session-label">{label(meeting, locale, timeZone)}</span>
+                  <span className="hs-rowact hs-session-actions">
+                    <IconAction
+                      name="Delete meeting"
+                      icon="delete-bin-line"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleting(meeting);
+                      }}
+                    />
+                  </span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
           <div className="notes-library">
             {(
@@ -356,7 +338,7 @@ export function MeetingNotes({
                       setListShown(false);
                     }}
                     onKeyDown={(e) => {
-                      if (e.key !== 'Enter') return;
+                      if (!pressed(e)) return;
                       setSection(key);
                       setListShown(false);
                     }}
