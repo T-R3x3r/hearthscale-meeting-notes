@@ -5,6 +5,7 @@
  */
 import type { App } from '@modelcontextprotocol/ext-apps';
 import { hostCall, type ViewCall } from '@hearthscale/app/view';
+import type { HostSlotNotification, ViewExtensionNotification } from '@hearthscale/app';
 
 /** Why something failed, in the platform's words without the SDK's error
  *  code before them. */
@@ -12,6 +13,10 @@ export const words = (e: unknown) =>
   (e instanceof Error ? e.message : String(e)).replace(/^MCP error -?\d+: /, '');
 
 type Handler = (data: never) => void;
+
+/** The platform's notifications to the view, by their method. */
+type Notification = ViewExtensionNotification | HostSlotNotification;
+type Params<M extends Notification['method']> = Extract<Notification, { method: M }>['params'];
 
 export class Host {
   private readonly handlers = new Map<string, Set<Handler>>();
@@ -46,9 +51,12 @@ export class Host {
     return result.structuredContent as T;
   }
 
-  /** Hears one of the backend's events, or a notification of the platform
-   *  by its method, until the answer is called. */
-  on<T>(name: string, fn: (data: T) => void): () => void {
+  /** Hears a notification of the platform by its method, typed by the
+   *  SDK, or one of the backend's events by its name, until the answer is
+   *  called. */
+  on<M extends Notification['method']>(method: M, fn: (data: Params<M>) => void): () => void;
+  on<T>(name: string, fn: (data: T) => void): () => void;
+  on(name: string, fn: (data: never) => void): () => void {
     const set = this.handlers.get(name) ?? new Set();
     set.add(fn as Handler);
     this.handlers.set(name, set);

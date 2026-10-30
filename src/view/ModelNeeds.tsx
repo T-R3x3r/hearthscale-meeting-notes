@@ -33,7 +33,7 @@ export function ModelNeeds({ host }: { host: Host }) {
 
   useEffect(() => {
     void load().catch((e) => setProblem(words(e)));
-    return host.on<{ download: { state: string } }>('hearthscale/models/download', ({ download }) => {
+    return host.on('hearthscale/models/download', ({ download }) => {
       if (download.state !== 'downloading') void load().catch((e) => setProblem(words(e)));
     });
   }, [host, load]);

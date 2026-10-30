@@ -126,19 +126,19 @@ export function SidePanel({
 
   useEffect(() => {
     const offs = [
-      host.on<{ id: string }>('hearthscale/sessions/deleted', ({ id }) => {
+      host.on('hearthscale/sessions/deleted', ({ id }) => {
         if (id !== session) return;
         void host.call('hearthscale/store/delete', { key }).then(() => setRound((r) => r + 1));
       }),
-      host.on<{ session: { id: string } }>('hearthscale/sessions/changed', ({ session: changed }) => {
-        if (changed.id === session) void check(changed.id);
+      host.on('hearthscale/sessions/changed', ({ session: changed }) => {
+        if (changed === session) void check(changed);
       }),
-      host.on<{ id: string; session: string | null }>('hearthscale/ui/slot-session', ({ id, session: now }) => {
+      host.on('hearthscale/ui/slot-session', ({ id, session: now }) => {
         if ((id !== CHAT && id !== OPENING) || !now || now === session) return;
         setSession(now);
         void host.call('hearthscale/store/set', { key, value: now });
       }),
-      host.on<{ id: string; height: number }>('hearthscale/ui/slot-size', ({ id, height }) => {
+      host.on('hearthscale/ui/slot-size', ({ id, height }) => {
         if (id === OPENING) setComposer(height);
       }),
     ];
