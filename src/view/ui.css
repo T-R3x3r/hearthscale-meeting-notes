@@ -21,13 +21,17 @@ body,
 }
 
 /* In a narrow tile, the bar above the list or the page holds the press
-   that shows or hides the list. */
+   that shows or hides the list. It keeps the page's scrollbar space and
+   sets the press's 16 px glyph on the page column's edge. */
 .notes-bar {
   display: flex;
   flex: none;
   align-items: center;
   height: calc(var(--space) * 9.5);
   padding: 0 var(--gap-row);
+  padding-left: calc(var(--gap-row) - (var(--icon-ctl-md) - var(--space) * 4) / 2);
+  overflow: hidden;
+  scrollbar-gutter: stable both-edges;
   border-bottom: var(--bw) solid var(--line);
 }
 
