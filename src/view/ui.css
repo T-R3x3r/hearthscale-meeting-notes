@@ -375,16 +375,6 @@ body,
   line-height: var(--lh-body);
 }
 
-/* A download's meter in a notice. */
-.notes-progress {
-  display: inline-flex;
-  width: calc(var(--w-sidebar) / 2);
-}
-
-.notes-progress > * {
-  flex: 1;
-}
-
 @media (width < 640px) {
   .notes .hs-settings-scroll {
     padding-left: var(--gap-row);
