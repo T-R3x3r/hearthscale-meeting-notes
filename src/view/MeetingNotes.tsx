@@ -290,30 +290,27 @@ export function MeetingNotes({
       )}
       {sideShown && (
         <div className="hs-sidebar-column notes-side">
-          <div
-            role="button"
-            tabIndex={0}
-            className={`hs-plugrow hs-inktext hs-app-row notes-app-row${atStart ? ' hs-boxsel' : ''}`}
-            onClick={home}
-            onKeyDown={(e) => pressed(e) && home()}
-          >
-            <span className="hs-sidebar-mark">
-              <Icon name="mic-line" size={16} />
-            </span>
-            Meeting notes
-            <span className="hs-flex-spacer" />
-            <IconAction
-              name="New meeting"
-              icon="add-line"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                void create();
-              }}
-            />
-          </div>
-          <div className="notes-search">
+          <div className="notes-side-head">
+            <Button variant="secondary" size="sm" fullWidth icon={<Icon name="add-line" size={14} />} onClick={() => void create()}>
+              New meeting
+            </Button>
             <SettingsSearch value={query} placeholder="Search meetings" onChange={setQuery} />
+          </div>
+          <div className="notes-all">
+            <div className="hs-session-slot">
+              <div
+                role="button"
+                tabIndex={0}
+                className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${atStart ? ' hs-boxsel' : ''}`}
+                onClick={home}
+                onKeyDown={(e) => pressed(e) && home()}
+              >
+                <span className="hs-session-mark">
+                  <Icon name="stack-line" size={15} />
+                </span>
+                <span className="hs-stitle hs-session-label">All meetings</span>
+              </div>
+            </div>
           </div>
           <div className="hs-scroll hs-sidebar-scroll notes-list">
             {found !== null && shown.length === 0 && <span className="notes-list-empty">No meetings found</span>}

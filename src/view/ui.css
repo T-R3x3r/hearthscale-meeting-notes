@@ -45,20 +45,23 @@ body,
   flex: none;
 }
 
-/* The app's row at the sidebar's top keeps the columns of the rows under
-   it: the width of their plates, their marks, their words and their
-   actions. */
-.notes .notes-app-row {
-  gap: calc(var(--space) * 1.5);
-  margin-right: var(--pad-sidebar);
-  padding: 0 var(--space);
+/* The sidebar's top: New meeting, then the search over the meetings, at
+   the inset and the step of the list under them. */
+.notes-side-head {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: calc(var(--space) * 1.25);
+  padding-right: var(--pad-sidebar);
 }
 
-/* The search over the meetings, between the app's row and the list, at
-   the list's inset and step. */
-.notes-search {
+/* The row of the start page, under the search with the space Hearthscale's
+   settings leave under theirs, and a list step above the meetings. */
+.notes-all {
+  display: flex;
   flex: none;
-  padding: calc(var(--space) * 1.25) var(--pad-sidebar) calc(var(--space) * 1.25) 0;
+  flex-direction: column;
+  padding: calc(var(--space) * 2) var(--pad-sidebar) calc(var(--space) * 1.25) 0;
 }
 
 .notes-list-empty {
