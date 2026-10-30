@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@tiptap/markdown': 3.32.1
-
 importers:
 
   .:
@@ -285,7 +282,7 @@ packages:
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
   '@hearthscale/app-ui@file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-ui-0.1.0.tgz':
-    resolution: {integrity: sha512-ZeJjP3bIRgfoVKyH5nt5Ehkwk9/2qLbe+cdD54VDNgLwa3AP1hgjDDNMctmtpdL8jOec76yTXKV81IJBGxR1Bg==, tarball: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-ui-0.1.0.tgz}
+    resolution: {integrity: sha512-cfAY8llvJvTSUrJobzIrM9Bzc7MEwLibBw8ldv5XOMf6cwIGZJ3cHkTQD5O9HV2FEfheAHv4DZEQg7irZ8lHuw==, tarball: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-ui-0.1.0.tgz}
     version: 0.1.0
     peerDependencies:
       '@types/react': ^19.3.0
@@ -296,7 +293,7 @@ packages:
         optional: true
 
   '@hearthscale/app@file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-0.1.0.tgz':
-    resolution: {integrity: sha512-R+FYHeeaCglYMY4jN1seK/4Pmk3IOpkwQeGMQ1RKpskm7kUFd6turQUxnzOKcsW5WseWmaVYel+XRhlNG6Fyqg==, tarball: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-0.1.0.tgz}
+    resolution: {integrity: sha512-oaelvDNv30c1S/43kr/26QqWl/eJmf4HVXQOZkR1Up1TxIbqjU25kdsFIOlF2A+2DhAQX6TxwS0v2ERsAMiThA==, tarball: file:C:/Users/Bebob/hs-verify/builder-kit/sdk/hearthscale-app-0.1.0.tgz}
     version: 0.1.0
     peerDependencies:
       '@modelcontextprotocol/ext-apps': ^1.7.5
