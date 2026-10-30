@@ -1,5 +1,6 @@
 /* The meeting-notes view's own layout, over the kit the platform loads
-   into the view. Every colour, corner, type size and gap is a token. */
+   into the view. Every length is a count of --space or a token, and every
+   colour, corner, type size and duration is a token. */
 
 html,
 body,
@@ -15,6 +16,21 @@ body,
   display: flex;
 }
 
+.notes[data-wide='false'] {
+  flex-direction: column;
+}
+
+/* In a narrow tile, the bar above the list or the page holds the press
+   that shows or hides the list. */
+.notes-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: calc(var(--space) * 9.5);
+  padding: 0 var(--gap-row);
+  border-bottom: var(--bw) solid var(--line);
+}
+
 .notes[data-wide='false'] > .notes-side {
   width: auto;
   flex: 1;
@@ -23,6 +39,24 @@ body,
 
 .notes-list > .hs-session-slot {
   flex: none;
+}
+
+/* The rows under the meetings keep the inset the meetings' list has. */
+.notes-library {
+  display: flex;
+  flex-direction: column;
+  padding-right: var(--pad-sidebar);
+}
+
+/* A row's actions show while the keyboard is in the row, as on hover. */
+.notes .hs-sessrow:focus-within .hs-rowact {
+  opacity: 1;
+}
+
+.notes [role='button']:focus-visible,
+.notes-line-name:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 /* A mark's tip shows under it. */
@@ -34,7 +68,7 @@ body,
   position: relative;
   flex: 1;
   min-width: 0;
-  overflow: hidden auto;
+  min-height: 0;
 }
 
 .notes-page > .hs-empty-view {
@@ -43,18 +77,19 @@ body,
 
 .notes-start {
   display: flex;
-  gap: var(--gap-row);
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+  gap: var(--gap-stack);
   margin-bottom: var(--gap-row);
 }
 
+.notes-picked-name {
+  color: var(--text);
+  font-size: var(--fs-md);
+}
+
 .notes-sheet {
-  box-sizing: border-box;
-  max-width: var(--content-width);
-  margin: 0 auto;
-  padding: var(--gap-page);
-  display: flex;
-  flex-direction: column;
   gap: var(--gap-row);
 }
 
@@ -73,8 +108,9 @@ body,
   background: transparent;
   color: var(--text);
   font-family: var(--font-app);
-  font-size: var(--fs-page-hero);
-  font-weight: var(--fw-strong);
+  font-size: var(--fs-page);
+  font-weight: var(--fw-semi);
+  text-overflow: ellipsis;
 }
 
 .notes-title::placeholder {
@@ -91,25 +127,31 @@ body,
 
 .notes-recorder {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--gap-row);
+  gap: var(--gap-stack);
   min-height: var(--h-ctl);
 }
 
 .notes-levels {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: var(--gap-label);
-  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-row);
 }
 
-.notes-working {
+/* One side's sound level: its mark and a meter. */
+.notes-level {
   display: inline-flex;
   align-items: center;
   gap: var(--gap-inline);
+  width: calc(var(--space) * 28);
   color: var(--mut);
-  font-size: var(--fs-md);
+}
+
+.notes-level > .hs-meter {
+  flex: 1;
 }
 
 .notes-tabs {
@@ -173,10 +215,12 @@ body,
 
 .notes-panel-bar {
   display: flex;
+  flex: none;
   align-items: center;
   gap: var(--gap-inline);
-  min-height: var(--h-tab);
-  padding: 0 var(--pad-row-x);
+  height: calc(var(--space) * 9.5);
+  padding: 0 calc(var(--space) * 3.5);
+  border-bottom: var(--bw) solid var(--line);
 }
 
 .notes-panel-title {
@@ -194,7 +238,7 @@ body,
   display: flex;
   flex-wrap: wrap;
   gap: var(--gap-inline);
-  padding: 0 var(--pad-row-x) var(--gap-row);
+  padding: var(--gap-row) calc(var(--space) * 3.5) 0;
 }
 
 .notes-transcript {
@@ -205,13 +249,6 @@ body,
   flex-direction: column;
 }
 
-.notes-copy {
-  position: absolute;
-  top: 0;
-  right: var(--pad-row-x);
-  z-index: 1;
-}
-
 .notes-lines {
   flex: 1;
   min-height: 0;
@@ -219,17 +256,17 @@ body,
   display: flex;
   flex-direction: column;
   gap: var(--gap-stack);
-  padding: var(--gap-row) var(--pad-row-x) var(--gap-page);
+  padding: var(--gap-row) calc(var(--space) * 3.5) var(--gap-page);
 }
 
 .notes-lines-empty {
-  color: var(--dim);
+  color: var(--mut);
   font-size: var(--fs-md);
 }
 
 .notes-line {
   box-sizing: border-box;
-  max-width: 85%;
+  max-width: calc(100% - var(--space) * 12);
   display: flex;
   flex-direction: column;
   gap: var(--gap-label);
@@ -255,12 +292,15 @@ body,
   opacity: var(--press-fade);
 }
 
+/* The line a quote in the notes points at. */
 .notes-line[data-focus='true'] {
-  box-shadow: 0 0 0 var(--bw) var(--focus);
+  background: var(--selection);
+  color: var(--selection-ink);
 }
 
 .notes-line-who {
   display: flex;
+  align-items: center;
   gap: var(--gap-inline);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semi);
@@ -276,35 +316,21 @@ body,
   overflow-wrap: anywhere;
 }
 
-.notes-file {
-  cursor: pointer;
-}
-
-.notes-picked {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gap-row);
-  margin-bottom: var(--gap-row);
-}
-
-.notes-picked-name {
-  color: var(--text);
-  font-size: var(--fs-md);
-}
-
 .notes-line-acts {
-  display: none;
+  display: inline-flex;
   gap: var(--gap-label);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease-out);
 }
 
-.notes-line:hover .notes-line-acts {
-  display: inline-flex;
+.notes-line:is(:hover, :focus-within) .notes-line-acts {
+  opacity: 1;
 }
 
 .notes-line-name {
   padding: 0;
   border: none;
+  border-radius: var(--r-sm);
   background: none;
   color: inherit;
   font: inherit;
@@ -319,13 +345,7 @@ body,
   padding: var(--pad-chip);
 }
 
-/* The person's own templates and recipes. */
-.notes-library {
-  display: flex;
-  flex-direction: column;
-  padding-bottom: var(--gap-row);
-}
-
+/* The forms of a template and a recipe. */
 .notes-form {
   display: flex;
   flex-direction: column;
@@ -348,57 +368,63 @@ body,
 .notes-recipe-text {
   box-sizing: border-box;
   width: 100%;
-  min-height: 30vh;
+  min-height: calc(var(--space) * 60);
   resize: vertical;
   font-family: var(--font-app);
-  font-size: var(--fs-docs);
+  font-size: var(--fs-body);
   line-height: var(--lh-body);
 }
 
-.notes-item {
+/* The models page: a model's size, the search row and a download. */
+.notes-size {
+  color: var(--mut);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.notes-search-row {
   display: flex;
   align-items: center;
   gap: var(--gap-inline);
-  min-height: var(--h-ctl);
-  padding: 0 var(--pad-row-x);
-  border-radius: var(--r-ctl);
-  background: var(--card);
 }
 
-.notes-item[data-built-in='true'] {
-  background: none;
-  color: var(--mut);
-}
-
-.notes-item-name {
-  color: var(--text);
-  font-size: var(--fs-md);
-}
-
-.notes-item-key {
-  color: var(--mut);
-  font-family: var(--font-mono);
-  font-size: var(--fs-sm);
-}
-
-/* The models page: what runs, downloads, and a model to add. */
-.notes-add {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-inline);
-  width: 100%;
+.notes-search-row > .hs-input {
+  flex: 1;
+  min-width: 0;
 }
 
 .notes-progress {
+  display: inline-flex;
   width: calc(var(--w-sidebar) / 2);
 }
 
-.notes-pick {
-  cursor: pointer;
+.notes-progress > * {
+  flex: 1;
 }
 
-.notes-section .notes-top,
-.notes-section .notes-item {
-  width: 100%;
-  box-sizing: border-box;
+@media (width < 640px) {
+  .notes .hs-settings-scroll {
+    padding-left: var(--gap-row);
+    padding-right: var(--gap-row);
+  }
+
+  .notes-panel-bar,
+  .notes-lines {
+    padding-left: var(--gap-row);
+    padding-right: var(--gap-row);
+  }
+
+  .notes-starters {
+    padding-left: var(--gap-row);
+    padding-right: var(--gap-row);
+  }
+
+  .notes-form-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .notes-form-row > :nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }

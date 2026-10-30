@@ -7,7 +7,7 @@
  * one, and again when its notes are written or changed.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EmptyState, Icon, ShellConfirm, useFloatingTips, Button } from '@hearthscale/app-ui';
+import { Button, EmptyState, Icon, Notice, ShellConfirm, useFloatingTips } from '@hearthscale/app-ui';
 import type { Line, Meeting, Side } from '../shared/meeting.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
@@ -16,10 +16,11 @@ import { label } from './format.ts';
 import { forTranscription } from './sound.ts';
 import { SidePanel, type PanelMode } from './SidePanel.tsx';
 import { RecipesPage, TemplatesPage } from './Library.tsx';
+import { IconAction } from './parts.tsx';
 import { ModelsPage } from './Models.tsx';
 
 /** The narrowest tab that shows the list beside the meeting. */
-const WIDE = 720;
+const WIDE = 640;
 
 export interface Levels {
   me: number;
@@ -54,6 +55,7 @@ export function MeetingNotes({
   const [wide, setWide] = useState(true);
   const [listShown, setListShown] = useState(false);
   const root = useRef<HTMLDivElement | null>(null);
+  const fileInput = useRef<HTMLInputElement | null>(null);
   const openId = useRef<string | null>(null);
   const tips = useFloatingTips();
 
@@ -125,7 +127,16 @@ export function MeetingNotes({
     return () => offs.forEach((off) => off());
   }, [host, reload, show]);
 
-  const tabTitle = open ? label(open.meeting, locale, timeZone) : 'Meeting notes';
+  const tabTitle =
+    section === 'templates'
+      ? 'Templates'
+      : section === 'recipes'
+        ? 'Recipes'
+        : section === 'models'
+          ? 'Models'
+          : open
+            ? label(open.meeting, locale, timeZone)
+            : 'Meeting notes';
   useEffect(() => {
     void host.request('hearthscale/ui/set-tab', { title: tabTitle });
   }, [host, tabTitle]);
@@ -215,6 +226,15 @@ export function MeetingNotes({
 
   return (
     <div ref={root} className="hs-app-surface notes" data-wide={wide ? 'true' : 'false'}>
+      {!wide && (
+        <div className="notes-bar">
+          <IconAction
+            name={listShown ? 'Hide meetings' : 'Show meetings'}
+            icon={listShown ? 'side-narrow' : 'side-wide'}
+            onClick={() => setListShown(!listShown)}
+          />
+        </div>
+      )}
       {sideShown && (
         <div className="hs-sidebar-column notes-side">
           <div className="hs-plugrow hs-inktext hs-app-row">
@@ -233,7 +253,7 @@ export function MeetingNotes({
               {...newTip.hover}
             >
               <span className="hs-sidebar-plus">
-                <Icon name="add-fill" size={16} />
+                <Icon name="add-line" size={16} />
               </span>
               {newTip.tip}
             </span>
@@ -244,10 +264,13 @@ export function MeetingNotes({
               return (
                 <div key={meeting.id} className="hs-session-slot">
                   <div
+                    role="button"
+                    tabIndex={0}
                     className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${
                       section === 'meetings' && meeting.id === open?.meeting.id ? ' hs-boxsel' : ''
                     }`}
                     onClick={() => void show(meeting.id)}
+                    onKeyDown={(e) => e.target === e.currentTarget && e.key === 'Enter' && void show(meeting.id)}
                   >
                     <span className="hs-session-mark">
                       <Icon
@@ -263,6 +286,11 @@ export function MeetingNotes({
                         aria-label="Delete meeting"
                         className="hs-tipwrap hs-hovink hs-inkmut hs-session-menu-action"
                         onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleting(meeting);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key !== 'Enter') return;
                           e.stopPropagation();
                           setDeleting(meeting);
                         }}
@@ -287,8 +315,15 @@ export function MeetingNotes({
             ).map(([key, name, icon]) => (
               <div key={key} className="hs-session-slot">
                 <div
+                  role="button"
+                  tabIndex={0}
                   className={`hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${section === key ? ' hs-boxsel' : ''}`}
                   onClick={() => {
+                    setSection(key);
+                    setListShown(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter') return;
                     setSection(key);
                     setListShown(false);
                   }}
@@ -327,31 +362,45 @@ export function MeetingNotes({
             }}
             problem={problem}
             onProblem={setProblem}
-            onBack={wide ? null : () => setListShown(true)}
           />
         ) : (
           <main className="notes-page">
             <div className="hs-empty-view">
               <EmptyState icon={<Icon name="mic-line" size={30} />} title="Meeting notes">
-                <div className="notes-start">
-                  <Button
-                    variant="primary"
-                    icon={<Icon name="record-circle-line" size={14} />}
-                    onClick={() =>
-                      void host
-                        .tool<{ meeting: Meeting }>('record', {}, 'Record')
-                        .then(({ meeting }) => show(meeting.id), (e) => setProblem(words(e)))
-                    }
-                  >
-                    Record
-                  </Button>
-                  <Button icon={<Icon name="add-line" size={14} />} onClick={() => void create()}>
-                    New meeting
-                  </Button>
-                  <label className="hs-button notes-file" data-variant="secondary" data-size="sm">
-                    <Icon name={uploading ? 'loader-4-line' : 'upload-2-line'} size={14} className={uploading ? 'hs-spin' : ''} />
-                    Transcribe a recording
+                {picked ? (
+                  <div className="notes-start">
+                    <span className="notes-picked-name">{picked.name}</span>
+                    <Button variant="primary" icon={<Icon name="file-text-line" size={14} />} onClick={() => void transcribe()}>
+                      Transcribe
+                    </Button>
+                    <Button variant="ghost" onClick={() => setPicked(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="notes-start">
+                    <Button
+                      variant="primary"
+                      icon={<Icon name="record-circle-line" size={14} />}
+                      onClick={() =>
+                        void host
+                          .tool<{ meeting: Meeting }>('record', {}, 'Record')
+                          .then(({ meeting }) => show(meeting.id), (e) => setProblem(words(e)))
+                      }
+                    >
+                      Record
+                    </Button>
+                    <Button icon={<Icon name="add-line" size={14} />} onClick={() => void create()}>
+                      New meeting
+                    </Button>
+                    <Button
+                      icon={<Icon name={uploading ? 'loader-4-line' : 'upload-2-line'} size={14} className={uploading ? 'hs-spin' : ''} />}
+                      onClick={() => fileInput.current?.click()}
+                    >
+                      Transcribe a recording
+                    </Button>
                     <input
+                      ref={fileInput}
                       type="file"
                       accept="audio/*"
                       hidden
@@ -361,23 +410,12 @@ export function MeetingNotes({
                         if (file) void pick(file);
                       }}
                     />
-                  </label>
-                  <Button icon={<Icon name="question-answer-line" size={14} />} onClick={() => setPanel('ask')}>
-                    Ask
-                  </Button>
-                </div>
-                {picked && (
-                  <div className="notes-picked">
-                    <span className="notes-picked-name">{picked.name}</span>
-                    <Button variant="primary" icon={<Icon name="file-text-line" size={14} />} onClick={() => void transcribe()}>
-                      Transcribe
-                    </Button>
-                    <Button variant="ghost" onClick={() => setPicked(null)}>
-                      Cancel
+                    <Button icon={<Icon name="question-answer-line" size={14} />} onClick={() => setPanel('ask')}>
+                      Ask
                     </Button>
                   </div>
                 )}
-                {problem && <div className="hs-notice">{problem}</div>}
+                {problem && <Notice>{problem}</Notice>}
               </EmptyState>
             </div>
           </main>

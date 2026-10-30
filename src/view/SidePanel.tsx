@@ -9,9 +9,10 @@
  * conversation in the tab as well.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Icon, IconButton, SegmentedControl, useFloatingTips, Button } from '@hearthscale/app-ui';
-import type { Line, Meeting, Side } from '../shared/meeting.ts';
+import { Button, SegmentedControl } from '@hearthscale/app-ui';
+import { shortClock, speakerName, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 import type { Host } from './host.ts';
+import { IconAction } from './parts.tsx';
 import { Transcript } from './Transcript.tsx';
 
 export type PanelMode = 'transcript' | 'ask';
@@ -58,9 +59,18 @@ export function SidePanel({
   const [session, setSession] = useState<string | undefined>(undefined);
   const [fresh, setFresh] = useState(false);
   const [round, setRound] = useState(0);
+  const [copied, setCopied] = useState(false);
   const key = `ask:${meeting?.id ?? 'all'}`;
-  const tips = useFloatingTips();
-  const closeTip = tips('close-panel', 'Close');
+
+  const copy = async () => {
+    if (!meeting) return;
+    const ordered = [...lines].sort((a, b) => a.start - b.start || a.n - b.n);
+    await navigator.clipboard.writeText(
+      ordered.map((l) => `${speakerName(l, meeting, me)} (${shortClock(l.start)}): ${l.text}`).join('\n'),
+    );
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
 
   /** Whether the person has sent nothing in the conversation yet. */
   const check = async (id: string) => {
@@ -178,12 +188,14 @@ export function SidePanel({
           <span className="notes-panel-title">Ask</span>
         )}
         <span className="hs-flex-spacer" />
-        <span className="hs-tipwrap" {...closeTip.hover}>
-          <IconButton aria-label="Close" onClick={onClose}>
-            <Icon name="close-line" size={16} />
-          </IconButton>
-          {closeTip.tip}
-        </span>
+        {mode === 'transcript' && meeting && lines.length > 0 && (
+          <IconAction
+            name={copied ? 'Copied' : 'Copy transcript'}
+            icon={copied ? 'check-line' : 'file-copy-line'}
+            onClick={() => void copy()}
+          />
+        )}
+        <IconAction name="Close" icon="close-line" onClick={onClose} />
       </div>
       {mode === 'transcript' && meeting ? (
         <Transcript

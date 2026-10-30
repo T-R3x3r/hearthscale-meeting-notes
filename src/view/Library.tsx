@@ -5,9 +5,23 @@
  * assistant runs on a meeting or on all of them, listed in its `/` menu.
  */
 import { useEffect, useState } from 'react';
-import { Button, Icon, IconButton, PageTitle, ShellConfirm, TextField, TextInput } from '@hearthscale/app-ui';
+import {
+  Button,
+  EmptyState,
+  Icon,
+  ListRow,
+  Mono,
+  Notice,
+  PageTitle,
+  SettingsCard,
+  SettingsSection,
+  ShellConfirm,
+  TextField,
+  TextInput,
+} from '@hearthscale/app-ui';
 import { TEMPLATES, type Template } from '../shared/templates.ts';
 import { words, type Host } from './host.ts';
+import { IconAction, Page } from './parts.tsx';
 
 interface Recipe {
   name: string;
@@ -45,19 +59,12 @@ export function TemplatesPage({ host }: { host: Host }) {
     setEditing({ ...editing, sections: editing.sections.map((s, at) => (at === i ? { ...s, ...change } : s)) });
 
   return (
-    <main className="hs-scroll notes-page">
-      <div className="notes-sheet">
-        <div className="notes-top">
-          <PageTitle>Templates</PageTitle>
-          <span className="hs-flex-spacer" />
-          {!editing && (
-            <Button icon={<Icon name="add-line" size={14} />} onClick={() => setEditing(blankTemplate())}>
-              New template
-            </Button>
-          )}
-        </div>
-        {problem && <div className="hs-notice">{problem}</div>}
-        {editing ? (
+    <Page>
+      <PageTitle>Templates</PageTitle>
+      {problem && <Notice>{problem}</Notice>}
+      {editing ? (
+        <>
+          <SettingsSection first>{editing.id ? 'Edit template' : 'New template'}</SettingsSection>
           <div className="notes-form">
             <TextField label="Name" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
             <TextField
@@ -74,12 +81,11 @@ export function TemplatesPage({ host }: { host: Host }) {
                   value={s.guide}
                   onChange={(e) => setSection(i, { guide: e.target.value })}
                 />
-                <IconButton
-                  aria-label="Remove section"
+                <IconAction
+                  name="Remove section"
+                  icon="close-line"
                   onClick={() => setEditing({ ...editing, sections: editing.sections.filter((_, at) => at !== i) })}
-                >
-                  <Icon name="close-line" size={16} />
-                </IconButton>
+                />
               </div>
             ))}
             <div className="notes-form-actions">
@@ -98,29 +104,43 @@ export function TemplatesPage({ host }: { host: Host }) {
               </Button>
             </div>
           </div>
-        ) : (
-          <>
-            {own.map((t) => (
-              <div key={t.id} className="notes-item">
-                <span className="notes-item-name">{t.name}</span>
-                <span className="hs-flex-spacer" />
-                <IconButton aria-label="Edit template" onClick={() => setEditing(t)}>
-                  <Icon name="pencil-line" size={16} />
-                </IconButton>
-                <IconButton aria-label="Delete template" onClick={() => setDeleting(t)}>
-                  <Icon name="delete-bin-line" size={16} />
-                </IconButton>
-              </div>
-            ))}
-            <h2 className="notes-heading">Built in</h2>
+        </>
+      ) : (
+        <>
+          <SettingsSection
+            first
+            action={
+              <Button size="sm" icon={<Icon name="add-line" size={14} />} onClick={() => setEditing(blankTemplate())}>
+                New template
+              </Button>
+            }
+          >
+            Your templates
+          </SettingsSection>
+          {own.length > 0 && (
+            <SettingsCard>
+              {own.map((t) => (
+                <ListRow
+                  key={t.id}
+                  title={t.name}
+                  actions={
+                    <>
+                      <IconAction name="Edit template" icon="pencil-line" size="sm" onClick={() => setEditing(t)} />
+                      <IconAction name="Delete template" icon="delete-bin-line" size="sm" onClick={() => setDeleting(t)} />
+                    </>
+                  }
+                />
+              ))}
+            </SettingsCard>
+          )}
+          <SettingsSection>Built in</SettingsSection>
+          <SettingsCard>
             {TEMPLATES.map((t) => (
-              <div key={t.id} className="notes-item" data-built-in="true">
-                <span className="notes-item-name">{t.name}</span>
-              </div>
+              <ListRow key={t.id} title={t.name} />
             ))}
-          </>
-        )}
-      </div>
+          </SettingsCard>
+        </>
+      )}
       {deleting && (
         <ShellConfirm
           title={`Delete “${deleting.name}”?`}
@@ -135,7 +155,7 @@ export function TemplatesPage({ host }: { host: Host }) {
           onCancel={() => setDeleting(null)}
         />
       )}
-    </main>
+    </Page>
   );
 }
 
@@ -165,20 +185,15 @@ export function RecipesPage({ host }: { host: Host }) {
     }
   };
 
+  const blank = () => setEditing({ name: '', title: '', text: '' });
+
   return (
-    <main className="hs-scroll notes-page">
-      <div className="notes-sheet">
-        <div className="notes-top">
-          <PageTitle>Recipes</PageTitle>
-          <span className="hs-flex-spacer" />
-          {!editing && (
-            <Button icon={<Icon name="add-line" size={14} />} onClick={() => setEditing({ name: '', title: '', text: '' })}>
-              New recipe
-            </Button>
-          )}
-        </div>
-        {problem && <div className="hs-notice">{problem}</div>}
-        {editing ? (
+    <Page>
+      <PageTitle>Recipes</PageTitle>
+      {problem && <Notice>{problem}</Notice>}
+      {editing ? (
+        <>
+          <SettingsSection first>{editing.name ? 'Edit recipe' : 'New recipe'}</SettingsSection>
           <div className="notes-form">
             <TextField label="Name" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
             <textarea
@@ -198,22 +213,45 @@ export function RecipesPage({ host }: { host: Host }) {
               </Button>
             </div>
           </div>
-        ) : (
-          own.map((r) => (
-            <div key={r.name} className="notes-item">
-              <span className="notes-item-name">{r.title}</span>
-              <span className="notes-item-key">/{r.name}</span>
-              <span className="hs-flex-spacer" />
-              <IconButton aria-label="Edit recipe" onClick={() => setEditing(r)}>
-                <Icon name="pencil-line" size={16} />
-              </IconButton>
-              <IconButton aria-label="Delete recipe" onClick={() => setDeleting(r)}>
-                <Icon name="delete-bin-line" size={16} />
-              </IconButton>
-            </div>
-          ))
-        )}
-      </div>
+        </>
+      ) : own.length === 0 ? (
+        <EmptyState icon={<Icon name="quill-pen-line" size={30} />} title="No recipes yet">
+          <Button icon={<Icon name="add-line" size={14} />} onClick={blank}>
+            New recipe
+          </Button>
+        </EmptyState>
+      ) : (
+        <>
+          <SettingsSection
+            first
+            action={
+              <Button size="sm" icon={<Icon name="add-line" size={14} />} onClick={blank}>
+                New recipe
+              </Button>
+            }
+          >
+            Your recipes
+          </SettingsSection>
+          <SettingsCard>
+            {own.map((r) => (
+              <ListRow
+                key={r.name}
+                title={
+                  <>
+                    {r.title} <Mono>/{r.name}</Mono>
+                  </>
+                }
+                actions={
+                  <>
+                    <IconAction name="Edit recipe" icon="pencil-line" size="sm" onClick={() => setEditing(r)} />
+                    <IconAction name="Delete recipe" icon="delete-bin-line" size="sm" onClick={() => setDeleting(r)} />
+                  </>
+                }
+              />
+            ))}
+          </SettingsCard>
+        </>
+      )}
       {deleting && (
         <ShellConfirm
           title={`Delete “${deleting.title}”?`}
@@ -228,6 +266,6 @@ export function RecipesPage({ host }: { host: Host }) {
           onCancel={() => setDeleting(null)}
         />
       )}
-    </main>
+    </Page>
   );
 }

@@ -5,9 +5,23 @@
  * then follows the download. Which model the app uses for each kind is
  * chosen in the app's settings.
  */
-import { useEffect, useState } from 'react';
-import { Button, Icon, Meter, PageTitle, StatusWord, TextInput } from '@hearthscale/app-ui';
+import { Fragment, useEffect, useState } from 'react';
+import {
+  Button,
+  Icon,
+  LinkRow,
+  ListRow,
+  Meter,
+  Notice,
+  PageTitle,
+  SettingsCard,
+  SettingsSection,
+  StatusWord,
+  TextInput,
+  useFloatingTips,
+} from '@hearthscale/app-ui';
 import { words, type Host } from './host.ts';
+import { Page } from './parts.tsx';
 
 interface Card {
   id: string;
@@ -51,13 +65,13 @@ const size = (bytes: number) =>
   bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.max(1, Math.round(bytes / 1e6))} MB`;
 
 export function ModelsPage({ host }: { host: Host }) {
-  const [cards, setCards] = useState<Card[]>([]);
+  const [cards, setCards] = useState<(Card & { kind: Kind })[]>([]);
   const [chosen, setChosen] = useState<Record<string, Chosen>>({});
   const [adding, setAdding] = useState<Kind | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
   const load = async () => {
-    const all: Card[] = [];
+    const all: (Card & { kind: Kind })[] = [];
     let picked: Record<string, Chosen> = {};
     for (const need of NEEDS) {
       for (const state of ['ready', 'absent', 'downloading'] as const) {
@@ -87,58 +101,79 @@ export function ModelsPage({ host }: { host: Host }) {
     });
   }, [host]);
 
-  const kindOf = (c: Card) => (c as Card & { kind: Kind }).kind;
-
   return (
-    <main className="hs-scroll notes-page">
-      <div className="notes-sheet">
-        <PageTitle>Models</PageTitle>
-        {problem && <div className="hs-notice">{problem}</div>}
-        {NEEDS.map((need) => {
-          const now = chosen[need.kind];
-          const running = now && now.card ? cards.find((c) => c.id === now.card)?.label ?? now.card : null;
-          const busy = cards.filter((c) => kindOf(c) === need.kind && c.state === 'downloading');
-          return (
-            <section key={need.kind} className="notes-section">
-              <div className="notes-top">
-                <h2 className="notes-heading">{need.name}</h2>
-                <span className="hs-flex-spacer" />
+    <Page>
+      <PageTitle>Models</PageTitle>
+      {problem && <Notice>{problem}</Notice>}
+      {NEEDS.map((need, i) => {
+        const now = chosen[need.kind];
+        const running = now?.card ? (cards.find((c) => c.id === now.card)?.label ?? now.card) : null;
+        const busy = cards.filter((c) => c.kind === need.kind && c.state === 'downloading');
+        const open = adding === need.kind;
+        return (
+          <Fragment key={need.kind}>
+            <SettingsSection
+              first={i === 0}
+              action={
                 <Button
-                  icon={<Icon name={adding === need.kind ? 'arrow-up-s-line' : 'add-line'} size={14} />}
-                  onClick={() => setAdding(adding === need.kind ? null : need.kind)}
+                  size="sm"
+                  icon={<Icon name={open ? 'arrow-up-s-line' : 'add-line'} size={14} />}
+                  onClick={() => setAdding(open ? null : need.kind)}
                 >
                   Add a model
                 </Button>
-              </div>
-              <div className="notes-item">
-                <span className="notes-item-name">{running ?? (now && 'reason' in now ? now.reason : 'None')}</span>
-              </div>
-              {busy.map((c) => (
-                <div key={c.id} className="notes-item">
-                  <span className="notes-item-name">{c.label}</span>
-                  <span className="hs-flex-spacer" />
-                  {c.progress && (
-                    <div className="notes-progress">
-                      <Meter value={c.progress.receivedBytes / c.progress.totalBytes} label={`Downloading ${c.label}`} />
-                    </div>
+              }
+            >
+              {need.name}
+            </SettingsSection>
+            {running || busy.length > 0 ? (
+              <SettingsCard>
+                {running && <ListRow title={running} actions={<StatusWord tone="ok">In use</StatusWord>} />}
+                {busy.map((c) => (
+                  <ListRow
+                    key={c.id}
+                    title={c.label}
+                    actions={
+                      <span className="notes-progress">
+                        {c.progress ? (
+                          <Meter value={c.progress.receivedBytes / c.progress.totalBytes} label={`Downloading ${c.label}`} />
+                        ) : (
+                          <StatusWord tone="info" live>
+                            Downloading
+                          </StatusWord>
+                        )}
+                      </span>
+                    }
+                  />
+                ))}
+              </SettingsCard>
+            ) : (
+              now &&
+              'reason' in now && (
+                <Notice>
+                  {now.reason}
+                  {!open && (
+                    <button type="button" className="hs-link" onClick={() => setAdding(need.kind)}>
+                      Add a model
+                    </button>
                   )}
-                </div>
-              ))}
-              {adding === need.kind && (
-                <AddModel
-                  host={host}
-                  kind={need.kind}
-                  task={need.task}
-                  offered={cards.filter((c) => kindOf(c) === need.kind && c.state === 'absent')}
-                  onProblem={setProblem}
-                  onInstalled={() => void load()}
-                />
-              )}
-            </section>
-          );
-        })}
-      </div>
-    </main>
+                </Notice>
+              )
+            )}
+            {open && (
+              <AddModel
+                host={host}
+                kind={need.kind}
+                task={need.task}
+                offered={cards.filter((c) => c.kind === need.kind && c.state === 'absent')}
+                onProblem={setProblem}
+                onInstalled={() => void load()}
+              />
+            )}
+          </Fragment>
+        );
+      })}
+    </Page>
   );
 }
 
@@ -161,6 +196,7 @@ function AddModel({
   const [found, setFound] = useState<Repository[] | null>(null);
   const [listing, setListing] = useState<{ repo: string; candidates: Candidate[] } | null>(null);
   const [server, setServer] = useState<string | null>(null);
+  const tips = useFloatingTips();
 
   useEffect(() => {
     void host
@@ -208,20 +244,28 @@ function AddModel({
     }
   };
 
+  const installButton = (onClick: () => void) => (
+    <Button size="sm" icon={<Icon name="download-2-line" size={14} />} onClick={onClick}>
+      Install
+    </Button>
+  );
+
   return (
-    <div className="notes-add">
+    <SettingsCard>
       {offered.map((c) => (
-        <div key={c.id} className="notes-item">
-          <span className="notes-item-name">{c.label}</span>
-          {c.sizeBytes !== undefined && <span className="notes-item-key">{size(c.sizeBytes)}</span>}
-          <span className="hs-flex-spacer" />
-          <Button size="sm" icon={<Icon name="download-2-line" size={14} />} onClick={() => void install(c.id)}>
-            Install
-          </Button>
-        </div>
+        <ListRow
+          key={c.id}
+          title={c.label}
+          actions={
+            <>
+              {c.sizeBytes !== undefined && <span className="notes-size">{size(c.sizeBytes)}</span>}
+              {installButton(() => void install(c.id))}
+            </>
+          }
+        />
       ))}
       {server && (
-        <div className="notes-form-actions">
+        <div className="hs-setrow notes-search-row">
           <TextInput
             aria-label="Search Hugging Face"
             placeholder="Search Hugging Face"
@@ -236,51 +280,54 @@ function AddModel({
       )}
       {listing ? (
         <>
-          <div className="notes-top">
-            <Button size="sm" variant="ghost" icon={<Icon name="arrow-left-line" size={14} />} onClick={() => setListing(null)}>
-              {listing.repo}
-            </Button>
-          </div>
-          {listing.candidates.map((c) => (
-            <div key={c.path} className="notes-item">
-              <span className="notes-item-name">{c.quantization || c.path}</span>
-              <span className="notes-item-key">{size(c.sizeBytes)}</span>
-              <span className="hs-flex-spacer" />
-              {c.reason || !c.verifiable ? (
-                <StatusWord tone="warn">{c.reason ?? 'No checksum'}</StatusWord>
-              ) : (
-                <Button
-                  size="sm"
-                  icon={<Icon name="download-2-line" size={14} />}
-                  onClick={() =>
-                    void install({
-                      server,
-                      kind,
-                      repo: listing.repo,
-                      file: c.path,
-                      ...(c.projectorOptions && c.projectorOptions.length > 1 && { projector: c.projectorOptions[0]!.path }),
-                      companions: c.requires.map((need) => ({ role: need.role, repo: need.options[0]!.repo, file: need.options[0]!.path })),
-                    })
-                  }
-                >
-                  Install
-                </Button>
-              )}
-            </div>
-          ))}
+          <ListRow
+            title={listing.repo}
+            actions={
+              <Button size="sm" variant="ghost" icon={<Icon name="arrow-left-line" size={14} />} onClick={() => setListing(null)}>
+                Back
+              </Button>
+            }
+          />
+          {listing.candidates.map((c) => {
+            const why = tips(`why-${c.path}`, c.reason ?? 'Its download has no checksum to check it against.');
+            return (
+              <ListRow
+                key={c.path}
+                title={c.quantization || c.path}
+                actions={
+                  <>
+                    <span className="notes-size">{size(c.sizeBytes)}</span>
+                    {c.reason || !c.verifiable ? (
+                      <span className="hs-tipwrap" {...why.hover}>
+                        <StatusWord tone="warn">Not offered</StatusWord>
+                        {why.tip}
+                      </span>
+                    ) : (
+                      installButton(
+                        () =>
+                          void install({
+                            server,
+                            kind,
+                            repo: listing.repo,
+                            file: c.path,
+                            ...(c.projectorOptions && c.projectorOptions.length > 1 && { projector: c.projectorOptions[0]!.path }),
+                            companions: c.requires.map((need) => ({ role: need.role, repo: need.options[0]!.repo, file: need.options[0]!.path })),
+                          }),
+                      )
+                    )}
+                  </>
+                }
+              />
+            );
+          })}
         </>
       ) : found?.length === 0 ? (
-        <span className="notes-lines-empty">No models found.</span>
+        <ListRow title="No models found" />
       ) : (
         found?.map((r) => (
-          <div key={r.repo} className="notes-item notes-pick" onClick={() => void open(r.repo)}>
-            <span className="notes-item-name">{r.repo}</span>
-            <span className="notes-item-key">{r.downloads.toLocaleString()}</span>
-            <span className="hs-flex-spacer" />
-            <Icon name="arrow-right-s-line" size={16} />
-          </div>
+          <LinkRow key={r.repo} title={r.repo} value={`${r.downloads.toLocaleString()} downloads`} onOpen={() => void open(r.repo)} />
         ))
       )}
-    </div>
+    </SettingsCard>
   );
 }

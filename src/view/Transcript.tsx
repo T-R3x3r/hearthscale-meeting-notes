@@ -7,8 +7,9 @@
  * the diarization found can be given a name.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Icon, IconButton, Popover, TextInput, useFloatingTips } from '@hearthscale/app-ui';
+import { Button, Popover, TextInput } from '@hearthscale/app-ui';
 import { shortClock, speakerName, type Line, type Meeting, type Side } from '../shared/meeting.ts';
+import { IconAction } from './parts.tsx';
 
 /** How near the end the list must be, in pixels, to follow it. */
 const END_PX = 48;
@@ -34,10 +35,8 @@ export function Transcript({
 }) {
   const list = useRef<HTMLDivElement | null>(null);
   const following = useRef(true);
-  const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [naming, setNaming] = useState<{ speaker: string; anchor: HTMLElement; name: string } | null>(null);
-  const tips = useFloatingTips();
   const ordered = useMemo(() => [...lines].sort((a, b) => a.start - b.start || a.n - b.n), [lines]);
   const focused = useMemo(() => {
     if (focus === null) return null;
@@ -56,13 +55,6 @@ export function Transcript({
     list.current?.querySelector(`[data-line="${focused.n}"]`)?.scrollIntoView({ block: 'center' });
   }, [focused]);
 
-  const copy = async () => {
-    const text = ordered.map((l) => `${speakerName(l, meeting, me)} (${shortClock(l.start)}): ${l.text}`).join('\n');
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
-  };
-  const copyTip = tips('copy', copied ? 'Copied' : 'Copy transcript');
   const name = () => {
     if (!naming) return;
     onName(naming.speaker, naming.name);
@@ -71,14 +63,6 @@ export function Transcript({
 
   return (
     <div className="notes-transcript">
-      {ordered.length > 0 && (
-        <span className="hs-tipwrap notes-copy" {...copyTip.hover}>
-          <IconButton aria-label="Copy transcript" onClick={() => void copy()}>
-            <Icon name={copied ? 'check-line' : 'file-copy-line'} size={16} />
-          </IconButton>
-          {copyTip.tip}
-        </span>
-      )}
       <div
         ref={list}
         className="hs-scroll notes-lines"
@@ -92,8 +76,6 @@ export function Transcript({
         )}
         {ordered.map((l) => {
           const name = speakerName(l, meeting, me);
-          const fix = tips(`fix-${l.n}`, 'Fix');
-          const del = tips(`delete-${l.n}`, 'Delete line');
           return (
             <div
               key={l.n}
@@ -117,18 +99,8 @@ export function Transcript({
                 <span className="notes-line-time">{shortClock(l.start)}</span>
                 <span className="hs-flex-spacer" />
                 <span className="notes-line-acts">
-                  <span className="hs-tipwrap" {...fix.hover}>
-                    <IconButton size="sm" aria-label="Fix" onClick={() => setEditing(l.n)}>
-                      <Icon name="pencil-line" size={14} />
-                    </IconButton>
-                    {fix.tip}
-                  </span>
-                  <span className="hs-tipwrap" {...del.hover}>
-                    <IconButton size="sm" aria-label="Delete line" onClick={() => onEdit(l.n, '')}>
-                      <Icon name="delete-bin-line" size={14} />
-                    </IconButton>
-                    {del.tip}
-                  </span>
+                  <IconAction name="Fix" icon="pencil-line" size="sm" onClick={() => setEditing(l.n)} />
+                  <IconAction name="Delete line" icon="delete-bin-line" size="sm" onClick={() => onEdit(l.n, '')} />
                 </span>
               </span>
               {editing === l.n ? (
