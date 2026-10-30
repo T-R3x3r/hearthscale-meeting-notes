@@ -14,7 +14,7 @@
  * changes notes through `set_notes`.
  */
 import type { AppContext, Backend } from '@hearthscale/app';
-import type { Line, Meeting, MeetingState, Side } from '../shared/meeting.ts';
+import { dayOf, type Line, type Meeting, type MeetingState, type Side } from '../shared/meeting.ts';
 import { AUTO, template, type Template } from '../shared/templates.ts';
 import { BUILT_IN, OWN } from '../shared/requests.ts';
 import { Answers } from './answers.ts';
@@ -316,6 +316,7 @@ async function write(id: string, templateId: string, control = begin(id)): Promi
   meeting.template = shape.id;
   await step(meeting, 'writing');
   try {
+    const { locale, timeZone } = await ctx.region();
     const written = await writer.write(
       {
         meeting,
@@ -324,6 +325,7 @@ async function write(id: string, templateId: string, control = begin(id)): Promi
         template: shape,
         me: settings.name,
         about: settings.about,
+        day: dayOf(meeting.created, locale, timeZone),
         language: settings.notesLanguage === 'As the meeting' ? null : settings.notesLanguage,
       },
       control.signal,

@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Button, EmptyState, Icon, Notice, SettingsSearch, ShellConfirm, Toast, useFloatingTips } from '@hearthscale/app-ui';
-import { BUSY, type Line, type Meeting, type Side } from '../shared/meeting.ts';
+import { BUSY, dayOf, type Line, type Meeting, type Side } from '../shared/meeting.ts';
 import type { Live } from '../backend/recorder.ts';
 import { words, type Host } from './host.ts';
 import { MeetingPage, type Opened } from './MeetingPage.tsx';
@@ -502,6 +502,7 @@ export function MeetingNotes({
           onClose={() => setPanel(null)}
           meeting={open?.meeting ?? null}
           name={open ? label(open.meeting, locale, timeZone) : ''}
+          day={open ? dayOf(open.meeting.created, locale, timeZone) : ''}
           lines={open?.lines ?? []}
           written={open !== null && (open.notes.length > 0 || open.mine.length > 0)}
           partial={live && live.meeting === open?.meeting.id ? partial : { me: '', them: '' }}

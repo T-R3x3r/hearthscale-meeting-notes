@@ -24,6 +24,8 @@ export interface Brief {
   me: string;
   /** What the person said about themselves, for context. */
   about: string;
+  /** The meeting's day in words, in the person's locale and time zone. */
+  day: string;
   /** The language to write in, or null for the meeting's own. */
   language: string | null;
 }
@@ -208,9 +210,8 @@ export class Writer {
   }
 
   private facts(brief: Brief): string {
-    const day = new Date(brief.meeting.created).toUTCString().slice(0, 16);
     const about = brief.about.trim() ? `\nAbout the person who took the notes: ${brief.about.trim()}` : '';
-    return `Meeting: ${brief.meeting.title}\nDate: ${day}\nThe person who took the notes is "${brief.me}" in the transcript.${about}`;
+    return `Meeting: ${brief.meeting.title}\nDate: ${brief.day}\nThe person who took the notes is "${brief.me}" in the transcript.${about}`;
   }
 
   private shape(template: Template): string {

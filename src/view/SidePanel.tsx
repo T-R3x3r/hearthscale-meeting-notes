@@ -43,6 +43,7 @@ export function SidePanel({
   onClose,
   meeting,
   name,
+  day,
   lines,
   written,
   partial,
@@ -60,6 +61,8 @@ export function SidePanel({
   meeting: Meeting | null;
   /** The open meeting's name as the person reads it. */
   name: string;
+  /** The open meeting's day in words, as the person reads it. */
+  day: string;
   lines: Line[];
   /** Whether the open meeting holds notes, written or the person's own. */
   written: boolean;
@@ -191,13 +194,13 @@ export function SidePanel({
       content: [
         {
           type: 'text',
-          text: `The meeting "${name}", id ${meeting.id}, of ${meeting.created.slice(0, 10)}.`,
+          text: `The meeting "${name}", id ${meeting.id}, of ${day}.`,
           _meta: { 'openai/title': name },
         },
       ],
       _meta: { 'hearthscale/modelContext': { slot: OPENING } },
     });
-  }, [host, mode, session, opening, meeting, name]);
+  }, [host, mode, session, opening, meeting, name, day]);
 
   const ask = async (text: string) => {
     await host.call('ui/message', { role: 'user', content: [{ type: 'text', text }] });

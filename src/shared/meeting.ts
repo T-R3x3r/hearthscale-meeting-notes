@@ -103,6 +103,12 @@ export function clock(seconds: number): string {
   return `${two(Math.floor(s / 3600))}:${two(Math.floor((s % 3600) / 60))}:${two(s % 60)}`;
 }
 
+/** The day a meeting was made, in words, in the person's locale and time
+ *  zone: its weekday, day, month and year. */
+export function dayOf(iso: string, locale: string, timeZone: string): string {
+  return new Date(iso).toLocaleDateString(locale, { timeZone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 /** A time as `m:ss`, or `h:mm:ss` from an hour on. */
 export function shortClock(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));

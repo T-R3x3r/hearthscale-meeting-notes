@@ -955,7 +955,7 @@
     {
       "name": "search_meetings",
       "title": "Search meetings",
-      "description": "Searches the notes and the transcripts of all meetings, and answers the passages that match, each with its meeting, its date and the part it comes from.",
+      "description": "Searches the notes and the transcripts of all meetings, and answers the passages that match, each with its meeting, its day and the part it comes from.",
       "input": {
         "type": "object",
         "properties": {
@@ -982,7 +982,7 @@
     {
       "name": "list_meetings",
       "title": "List meetings",
-      "description": "Lists meetings, newest first, with their titles, dates and lengths. Narrows them by dates and by words of the title.",
+      "description": "Lists meetings, newest first, with their titles, days and lengths. Narrows them by dates and by words of the title.",
       "input": {
         "type": "object",
         "properties": {

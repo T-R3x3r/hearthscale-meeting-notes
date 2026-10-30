@@ -4,13 +4,15 @@
  * meetings, and one meeting's notes, the person's notes or its transcript,
  * the transcript in pages.
  *
+ * A meeting's day is in words, in the person's locale and time zone.
+ *
  * Each part of a meeting is one document of the index, under the source
  * `meeting:<id>:<part>`. A meeting goes into the index when its notes are
  * written or changed, not while it records, so the index's embedding model
  * runs once for each change of a part.
  */
 import type { AppContext } from '@hearthscale/app';
-import { shortClock, speakerName, type Line, type Meeting } from '../shared/meeting.ts';
+import { dayOf, shortClock, speakerName, type Line, type Meeting } from '../shared/meeting.ts';
 import type { Files } from './files.ts';
 
 /** Transcript lines in one page of `read_meeting`. */
@@ -33,6 +35,18 @@ export class Answers {
     private readonly me: () => string,
   ) {}
 
+  /** The day of a meeting in words, as the person reads it. */
+  private async days(): Promise<(meeting: Meeting) => string> {
+    const { locale, timeZone } = await this.ctx.region();
+    return (meeting) => dayOf(meeting.created, locale, timeZone);
+  }
+
+  /** A meeting's name: its title, or else "Meeting" and its day. */
+  private async names(): Promise<(meeting: Meeting) => string> {
+    const day = await this.days();
+    return (meeting) => meeting.title || `Meeting, ${day(meeting)}`;
+  }
+
   /** Puts a meeting's parts into the shared index as they are now; an
    *  empty part leaves the index. */
   async put(meeting: Meeting): Promise<void> {
@@ -42,7 +56,7 @@ export class Answers {
       mine: (await this.files.mine(meeting.id)).trim(),
       transcript: lines.map((l) => this.line(l, meeting)).join('\n'),
     };
-    const title = meeting.title || meeting.created.slice(0, 10);
+    const title = (await this.names())(meeting);
     for (const part of Object.keys(PARTS) as (keyof typeof PARTS)[]) {
       const source = `meeting:${meeting.id}:${part}`;
       if (texts[part]) await this.ctx.index.put({ source, title, pages: [{ text: texts[part] }] });
@@ -57,13 +71,14 @@ export class Answers {
   async search(query: string, limit: number) {
     const hits = await this.ctx.index.search(query, limit);
     const meetings = new Map((await this.files.list()).map((m) => [m.id, m]));
+    const day = await this.days();
     return {
       hits: hits.flatMap((hit) => {
         const m = /^meeting:([^:]+):(notes|mine|transcript)$/.exec(hit.source);
         const meeting = m ? meetings.get(m[1]!) : undefined;
         if (!m || !meeting) return [];
         const part = PARTS[m[2] as keyof typeof PARTS];
-        return [{ meeting: meeting.id, title: meeting.title, date: meeting.created, part, text: hit.text }];
+        return [{ meeting: meeting.id, title: meeting.title, day: day(meeting), part, text: hit.text }];
       }),
     };
   }
@@ -74,14 +89,15 @@ export class Answers {
       (m: Meeting) =>
         (!from || m.created >= from) && (!to || m.created <= to) && (!lower || m.title.toLowerCase().includes(lower)),
     );
+    const day = await this.days();
     return {
-      meetings: shown.map((m) => ({ id: m.id, title: m.title, date: m.created, length: shortClock(m.seconds), state: m.state })),
+      meetings: shown.map((m) => ({ id: m.id, title: m.title, day: day(m), length: shortClock(m.seconds), state: m.state })),
     };
   }
 
   async read(id: string, part: 'notes' | 'my notes' | 'transcript', from: number) {
     const meeting = await this.files.meeting(id);
-    const head = { id, title: meeting.title, date: meeting.created };
+    const head = { id, title: meeting.title, day: (await this.days())(meeting) };
     if (part === 'notes') return { ...head, text: plain(await this.files.notes(id)) };
     if (part === 'my notes') return { ...head, text: plain(await this.files.mine(id)) };
     const lines = (await this.files.lines(id)).sort((a, b) => a.start - b.start);
@@ -123,12 +139,9 @@ export class Answers {
   async mentions(query: string) {
     const lower = query.toLowerCase();
     const found = (await this.files.list()).filter((m) => m.title.toLowerCase().includes(lower)).slice(0, 20);
+    const name = await this.names();
     return {
-      items: found.map((m) => ({
-        uri: `meeting-notes://meeting/${m.id}`,
-        name: m.title || m.id,
-        title: m.title || `Meeting of ${m.created.slice(0, 10)}`,
-      })),
+      items: found.map((m) => ({ uri: `meeting-notes://meeting/${m.id}`, name: name(m), title: name(m) })),
     };
   }
 }
