@@ -100,11 +100,6 @@ body,
   margin-bottom: var(--gap-row);
 }
 
-.notes-picked-name {
-  color: var(--text);
-  font-size: var(--fs-md);
-}
-
 /* A meeting's page: its blocks a page's gap apart. */
 .notes-sheet {
   gap: var(--gap-page);

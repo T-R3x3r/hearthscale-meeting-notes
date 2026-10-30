@@ -416,10 +416,12 @@ export function MeetingNotes({
                 />
               </div>
               <div className="hs-empty-view">
-                <EmptyState icon={<Icon name="mic-line" size={30} />} title={list.length === 0 ? 'No meetings yet' : 'No meeting open'}>
+                <EmptyState
+                  icon={<Icon name={picked ? 'file-music-line' : 'mic-line'} size={30} />}
+                  title={picked ? picked.name : list.length === 0 ? 'No meetings yet' : 'No meeting open'}
+                >
                   {picked ? (
                     <div className="notes-start">
-                      <span className="notes-picked-name">{picked.name}</span>
                       <Button variant="primary" icon={<Icon name="file-text-line" size={14} />} onClick={() => void transcribe()}>
                         Transcribe
                       </Button>
