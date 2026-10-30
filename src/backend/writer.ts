@@ -131,6 +131,19 @@ const named = (who: string, said: string) => {
   return words.length > 0 && words.every((w) => said.includes(w)) ? who : '';
 };
 
+/** A text's words in lower case, to compare what two texts say. */
+const wordsOf = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+
+/** Whether a written point only repeats one of the person's notes: each of
+ *  its words is in that note. */
+const repeats = (text: string, notes: string[]) => {
+  const words = wordsOf(text);
+  return words.length > 0 && notes.some((note) => {
+    const said = new Set(wordsOf(note));
+    return words.every((w) => said.has(w));
+  });
+};
+
 const escapeHtml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -467,11 +480,10 @@ export class Writer {
       out.push(`## ${s.heading}`, '');
       for (const note of (placed.get(i) ?? []).sort((a, b) => a - b)) {
         out.push(`- ${person[note - 1]}`);
-        for (const d of (detailsOf.get(note) ?? []).slice(0, 2)) {
-          if (d.text.trim()) out.push(`  - ${model(d.text)}${quote(d.lines)}`);
-        }
+        const details = (detailsOf.get(note) ?? []).filter((d) => d.text.trim() && !repeats(d.text, person));
+        for (const d of details.slice(0, 2)) out.push(`  - ${model(d.text)}${quote(d.lines)}`);
       }
-      for (const p of s.points) if (p.text.trim()) out.push(`- ${model(p.text)}${quote(p.lines)}`);
+      for (const p of s.points) if (p.text.trim() && !repeats(p.text, person)) out.push(`- ${model(p.text)}${quote(p.lines)}`);
       out.push('');
     });
     const steps = next.filter((s) => s.text.trim());
