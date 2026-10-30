@@ -188,7 +188,7 @@ export class Recording {
     stream.on('error', ({ message, index }) => {
       if (index !== undefined) void this.ctx.log('warn', `a segment of ${side} failed: ${message}`);
       else if (side === 'them') this.hooks.unheard(message);
-      else this.hooks.ended(`The transcription stopped: ${message}`);
+      else this.hooks.ended(`The transcription stopped. ${message}`);
     });
     stream.on('done', () => finish());
     return found;

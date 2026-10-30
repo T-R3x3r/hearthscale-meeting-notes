@@ -156,7 +156,9 @@ export function MeetingPage({
     : [];
 
   const toggle = (mode: PanelMode) => onPanel(panel === mode ? null : mode);
-  const recordWhy = useFloatingTips()('record-why', otherLive ? 'Another meeting records now' : undefined);
+  const tips = useFloatingTips();
+  const recordWhy = tips('record-why', otherLive ? 'Another meeting is recording' : undefined);
+  const tellTip = tips('tell', told ? 'Copied' : 'Copy a line that says you take notes');
   const showMics = async (anchor: MenuAnchor) => {
     const { devices, chosen } = await host.tool<{ devices: string[]; chosen: string }>('microphones');
     setMics({ anchor, devices, chosen });
@@ -178,7 +180,7 @@ export function MeetingPage({
     const { isError } = await host.request<{ isError?: boolean }>('ui/download-file', {
       contents: [{ type: 'resource', resource: { uri: `file:///${encodeURIComponent(file)}`, mimeType: 'text/markdown', text } }],
     });
-    if (isError) onProblem('The file was not saved.');
+    if (isError) onProblem('The meeting could not be exported. Try again.');
   };
 
   return (
@@ -244,19 +246,22 @@ export function MeetingPage({
                 <IconAction name="Microphone" icon="mic-line" onClick={(e) => void showMics(anchorFrom('mic', e)).catch(fail)} />
               )}
               {live && (
-                <Button
-                  icon={<Icon name={told ? 'check-line' : 'megaphone-line'} size={14} />}
-                  onClick={() =>
-                    void navigator.clipboard
-                      .writeText('I take notes of this call with Meeting notes, on my own computer.')
-                      .then(() => {
-                        setTold(true);
-                        window.setTimeout(() => setTold(false), 1500);
-                      }, fail)
-                  }
-                >
-                  Tell the others
-                </Button>
+                <span className="hs-tipwrap" {...tellTip.hover}>
+                  <Button
+                    icon={<Icon name={told ? 'check-line' : 'megaphone-line'} size={14} />}
+                    onClick={() =>
+                      void navigator.clipboard
+                        .writeText('I’m taking notes of this call with Meeting notes.')
+                        .then(() => {
+                          setTold(true);
+                          window.setTimeout(() => setTold(false), 1500);
+                        }, fail)
+                    }
+                  >
+                    Tell the others
+                  </Button>
+                  {tellTip.tip}
+                </span>
               )}
               {live && (
                 <div className="notes-levels">
@@ -283,7 +288,7 @@ export function MeetingPage({
           <section className="notes-body">
             {problem && <Notice>{problem}</Notice>}
             <ModelNeeds host={host} />
-            {meeting.unheard && <Notice>Only the microphone is heard: {meeting.unheard}</Notice>}
+            {meeting.unheard && <Notice>Only your microphone is recorded. {meeting.unheard}</Notice>}
             {live?.quiet && <Notice>No sound from the other side yet.</Notice>}
             {meeting.stopped && !live && <Notice>{meeting.stopped}</Notice>}
             {meeting.failed && !writing && <Notice>{meeting.failed}</Notice>}
@@ -337,7 +342,6 @@ export function MeetingPage({
               <RichTextEditor
                 key={`mine-${opened.version}`}
                 label="My notes"
-                placeholder="Write your notes"
                 content={opened.mine}
                 onChange={(editor) => saveMine(editor.getMarkdown())}
               />
@@ -377,7 +381,7 @@ export function MeetingPage({
           />
           <MItem
             icon={<Icon name="download-2-line" size={14} />}
-            label="Export"
+            label="Export meeting"
             onClick={() => {
               setMore(null);
               void exportMeeting().catch(fail);

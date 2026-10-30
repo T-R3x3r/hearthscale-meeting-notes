@@ -16,11 +16,11 @@ const WHERE = 'in Settings > Apps > Meeting notes';
 /** The notice for the kinds the app has no model of, by which are missing. */
 const need = (transcription: boolean, chat: boolean) =>
   transcription && chat
-    ? `Meeting notes needs a transcription model and a chat model: choose them ${WHERE}.`
+    ? `Meeting notes needs a transcription model and a chat model. Choose them ${WHERE}.`
     : transcription
-      ? `Meeting notes needs a transcription model to hear meetings: choose one ${WHERE}.`
+      ? `Meeting notes needs a transcription model to hear meetings. Choose one ${WHERE}.`
       : chat
-        ? `Meeting notes needs a chat model to write notes: choose one ${WHERE}.`
+        ? `Meeting notes needs a chat model to write notes. Choose one ${WHERE}.`
         : null;
 
 export function ModelNeeds({ host }: { host: Host }) {

@@ -43,7 +43,7 @@ export class Host {
     });
     if (result.isError) {
       const text = result.content?.find((c) => c.type === 'text');
-      throw new Error(text && 'text' in text ? text.text : `${name} failed`);
+      throw new Error(text && 'text' in text ? text.text : `${label ?? 'The action'} could not be done. Try again.`);
     }
     return result.structuredContent as T;
   }

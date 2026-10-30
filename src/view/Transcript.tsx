@@ -73,7 +73,7 @@ export function Transcript({
         }}
       >
         {ordered.length === 0 && !partial.me && !partial.them && (
-          <span className="notes-lines-empty">Lines show here as people speak.</span>
+          <span className="notes-lines-empty">No transcript yet</span>
         )}
         {ordered.map((l) => {
           const name = speakerName(l, meeting, me);
@@ -104,7 +104,7 @@ export function Transcript({
                 <span className="notes-line-time">{shortClock(l.start)}</span>
                 <span className="hs-flex-spacer" />
                 <span className="notes-line-acts">
-                  <IconAction name="Fix" icon="pencil-line" size="sm" onClick={() => setEditing(l.n)} />
+                  <IconAction name="Edit line" icon="pencil-line" size="sm" onClick={() => setEditing(l.n)} />
                   <IconAction name="Delete line" icon="delete-bin-line" size="sm" onClick={() => onEdit(l.n, '')} />
                 </span>
               </span>

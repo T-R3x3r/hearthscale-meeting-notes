@@ -135,7 +135,7 @@ async function microphone(): Promise<string | undefined> {
 async function record(id: string | undefined, byCall: boolean): Promise<Meeting> {
   if (recording) {
     if (recording.rec.meeting.id === id) return recording.rec.meeting;
-    throw new Error(`"${recording.rec.meeting.title || 'A meeting'}" records now. Stop it first.`);
+    throw new Error(`"${recording.rec.meeting.title || 'Another meeting'}" is recording. Stop it first.`);
   }
   const meeting = id ? await files.meeting(id) : await files.create('', new Date());
   const lines = await files.lines(meeting.id);
@@ -220,7 +220,7 @@ async function write(id: string, templateId: string): Promise<Meeting> {
   writing.set(id, control);
   const meeting = await files.meeting(id);
   const shape = template(templateId) ?? (await files.templates()).find((t) => t.id === templateId);
-  if (!shape) throw new Error(`There is no template ${templateId}.`);
+  if (!shape) throw new Error('This meeting type no longer exists.');
   const lines = await files.lines(id);
   const mine = await files.mine(id);
   delete meeting.failed;
@@ -251,7 +251,7 @@ async function write(id: string, templateId: string): Promise<Meeting> {
     reindex(id);
   } catch (e) {
     if (control.signal.aborted) return meeting;
-    meeting.failed = `The notes were not written: ${words(e)}`;
+    meeting.failed = `The notes could not be written. ${words(e)}`;
   } finally {
     if (writing.get(id) === control) writing.delete(id);
   }
@@ -292,7 +292,7 @@ async function transcribe(asset: string, name: string): Promise<Meeting> {
       }
       await saveMeeting(meeting);
     } catch (e) {
-      meeting.failed = `The recording was not transcribed: ${words(e)}`;
+      meeting.failed = `The recording could not be transcribed. ${words(e)}`;
       meeting.state = 'done';
       await saveMeeting(meeting);
       return;
@@ -326,7 +326,7 @@ async function call({ inUse }: { inUse: boolean }): Promise<void> {
     }
     if (settings.recordOnCall) {
       const meeting = await record(undefined, true);
-      await notify('Recording this call', 'Meeting notes takes notes of this call.', `/meeting/${meeting.id}`, {
+      await notify('Recording this call', 'Meeting notes is taking notes of this call.', `/meeting/${meeting.id}`, {
         title: 'Stop',
         id: 'stop',
       });
@@ -457,7 +457,7 @@ const backend: Backend = {
       const meeting = live ? live.rec.meeting : await files.meeting(id);
       const lines = live ? live.lines : await files.lines(id);
       const at = lines.findIndex((l) => l.n === n);
-      if (at < 0) throw new Error('The transcript has no such line.');
+      if (at < 0) throw new Error('This line is no longer in the transcript.');
       if (text.trim()) lines[at] = { ...lines[at]!, text: text.trim() };
       else lines.splice(at, 1);
       await files.saveLines(meeting, lines, settings.name);

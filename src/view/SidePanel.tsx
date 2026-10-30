@@ -21,9 +21,9 @@ const SLOT = 'ask';
 
 /** Questions an empty chat about a meeting offers with one press. */
 const STARTERS = [
-  { label: 'What did I miss?', text: 'What did I miss in this meeting?' },
-  { label: 'Next steps', text: 'List the next steps of this meeting.' },
-  { label: 'Follow-up mail', text: 'Write a follow-up mail for this meeting.' },
+  { label: 'Catch me up', text: 'What did I miss in this meeting?' },
+  { label: 'List the next steps', text: 'List the next steps of this meeting.' },
+  { label: 'Write a follow-up mail', text: 'Write a follow-up mail for this meeting.' },
 ];
 
 export function SidePanel({

@@ -47,7 +47,7 @@ export class Files {
 
   async meeting(id: string): Promise<Meeting> {
     const text = await this.text(meetingPath(id));
-    if (!text) throw new Error(`There is no meeting ${id}.`);
+    if (!text) throw new Error('This meeting no longer exists.');
     return readMeeting(text);
   }
 

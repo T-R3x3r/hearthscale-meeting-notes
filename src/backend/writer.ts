@@ -121,7 +121,7 @@ export class Writer {
     const { cards, chosen } = await this.ctx.models!.list({ kind: 'chat' });
     const picked = chosen.chat;
     if (!picked || picked.card === null) {
-      throw new Error(picked?.reason ?? 'No chat model can write the notes.');
+      throw new Error(picked?.reason ?? 'No chat model can write the notes. Choose one in Settings > Apps > Meeting notes.');
     }
     return cards.find((c) => c.id === picked.card)?.contextTokens ?? null;
   }
@@ -146,9 +146,9 @@ export class Writer {
       if ('text' in delta) {
         if (!delta.reasoning) text += delta.text;
       } else if (delta.stop === 'error') {
-        throw new Error(delta.error ?? 'The model stopped with an error.');
+        throw new Error(delta.error ?? 'The chat model stopped before the notes were done. Try again.');
       } else if (delta.stop === 'length') {
-        throw new Error('The model ran out of room before the notes were done.');
+        throw new Error('The chat model could not finish the notes. Try again, or choose a larger model in Settings > Apps > Meeting notes.');
       }
     }
     return JSON.parse(text) as T;
@@ -214,7 +214,7 @@ export class Writer {
       return this.once(brief, person, signal);
     }
     const partRoom = room - fixed - notesTokens;
-    if (partRoom < 200) throw new Error('The chat model’s window is too small to write notes.');
+    if (partRoom < 200) throw new Error('The chat model is too small for these notes. Choose a larger one in Settings > Apps > Meeting notes.');
     return this.inParts(brief, person, partRoom, signal);
   }
 

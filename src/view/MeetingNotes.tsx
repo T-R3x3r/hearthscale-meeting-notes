@@ -372,7 +372,7 @@ export function MeetingNotes({
         ) : (
           <main className="notes-page">
             <div className="hs-empty-view">
-              <EmptyState icon={<Icon name="mic-line" size={30} />} title="Meeting notes">
+              <EmptyState icon={<Icon name="mic-line" size={30} />} title={list.length === 0 ? 'No meetings yet' : 'Meeting notes'}>
                 {picked ? (
                   <div className="notes-start">
                     <span className="notes-picked-name">{picked.name}</span>
