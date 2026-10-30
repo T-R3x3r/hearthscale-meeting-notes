@@ -14,7 +14,6 @@ import {
   ListRow,
   MItem,
   MenuSurface,
-  Mono,
   Notice,
   PageTitle,
   SettingsCard,
@@ -383,15 +382,7 @@ export function RequestsPage({ host }: { host: Host }) {
           <SettingsCard>
             {own.length > 0 ? (
               own.map((r) => (
-                <LinkRow
-                  key={r.name}
-                  title={
-                    <>
-                      {r.title} <Mono>/{r.name}</Mono>
-                    </>
-                  }
-                  onOpen={() => setViewing(r)}
-                />
+                <LinkRow key={r.name} title={r.title} onOpen={() => setViewing(r)} />
               ))
             ) : (
               <ListRow title="No saved requests of your own yet" />
