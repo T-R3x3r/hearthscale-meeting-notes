@@ -72,6 +72,13 @@ export function SidePanel({
     window.setTimeout(() => setCopied(false), 1500);
   };
 
+  /** The conversation kept for this panel's key, if any. The store gives
+   *  back what any version of the app wrote. */
+  const stored = async () => {
+    const { value } = await host.call('hearthscale/store/get', { key });
+    return typeof value === 'string' ? value : null;
+  };
+
   /** Whether the person has sent nothing in the conversation yet. */
   const check = async (id: string) => {
     const { entries } = await host.call('hearthscale/sessions/entries', { id });
@@ -83,8 +90,7 @@ export function SidePanel({
     let gone = false;
     setSession(undefined);
     void (async () => {
-      const { value } = await host.call('hearthscale/store/get', { key });
-      let id = typeof value === 'string' ? value : null;
+      let id = await stored();
       if (!id) {
         const { session: made } = await host.call('hearthscale/sessions/create', {
           title: meeting ? name : 'All meetings',

@@ -121,10 +121,17 @@ function hintWords(): string[] {
     .filter((w) => w.length > 0);
 }
 
+/** The name of the microphone the person chose, or '' for the system's
+ *  default. The store gives back what any version of the app wrote. */
+async function chosenMicrophone(): Promise<string> {
+  const stored = await ctx.store.get('microphone');
+  return typeof stored === 'string' ? stored : '';
+}
+
 /** The id of the microphone the person chose, or undefined for the
  *  system's default; refused when the chosen one is not connected. */
 async function microphone(): Promise<string | undefined> {
-  const chosen = (await ctx.store.get('microphone')) as string | null;
+  const chosen = await chosenMicrophone();
   if (!chosen) return undefined;
   const found = (await ctx.capture.devices('microphone')).find((d) => d.name === chosen);
   if (!found) throw new Error(`The microphone "${chosen}" is not connected. Choose another one.`);
@@ -522,7 +529,7 @@ const backend: Backend = {
 
     async microphones() {
       const devices = await ctx.capture.devices('microphone');
-      return { devices: devices.map((d) => d.name), chosen: ((await ctx.store.get('microphone')) as string | null) ?? '' };
+      return { devices: devices.map((d) => d.name), chosen: await chosenMicrophone() };
     },
 
     async choose_microphone(raw) {
