@@ -23,11 +23,12 @@
     "clipboard-write"
   ],
   "onboarding": {
-    "version": 1,
+    "version": 2,
     "cards": [
       {
         "title": "Notes of every meeting.",
-        "text": "Meeting notes hears your meetings on this computer and writes clear notes when each one ends."
+        "text": "Meeting notes hears your meetings on this computer and writes clear notes when each one ends.",
+        "image": "assets/intro.svg"
       },
       {
         "title": "What’s inside.",
