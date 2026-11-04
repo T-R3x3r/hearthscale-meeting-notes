@@ -15,7 +15,7 @@ const style = document.createElement('style');
 style.textContent = sheet;
 document.head.append(style);
 
-const app = new App({ name: 'Meeting notes', version: '2.0.0' }, {}, { autoResize: false });
+const app = new App({ name: 'Meeting notes', version: '2.0.1' }, {}, { autoResize: false });
 const host = new Host(app);
 await app.connect(new PostMessageTransport(window.parent, window.parent));
 

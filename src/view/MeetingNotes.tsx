@@ -33,6 +33,23 @@ function pressed(e: KeyboardEvent<HTMLElement>): boolean {
   return true;
 }
 
+type LibrarySection = 'templates' | 'requests';
+
+const isLibrary = (place: string): place is LibrarySection => place === 'templates' || place === 'requests';
+
+/** The pages the person moved through: a meeting's id, or a section's name,
+ *  where `meetings` is the start page. */
+const places = { here: 'meetings', back: [] as string[], forward: [] as string[] };
+
+/** Every path to a page calls this. A step sets `here` before it takes that
+ *  path, so the path adds no entry. */
+function leave(to: string) {
+  if (places.here === to) return;
+  places.back.push(places.here);
+  places.forward = [];
+  places.here = to;
+}
+
 export interface Levels {
   me: number;
   them: number | null;
@@ -62,7 +79,7 @@ export function MeetingNotes({
   const [picked, setPicked] = useState<{ name: string; asset: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [panel, setPanel] = useState<PanelMode | null>(first.live ? 'transcript' : null);
-  const [section, setSection] = useState<'meetings' | 'templates' | 'requests'>('meetings');
+  const [section, setSection] = useState<'meetings' | LibrarySection>('meetings');
   const [focus, setFocus] = useState<number | null>(null);
   const [wide, setWide] = useState(true);
   const [listShown, setListShown] = useState(false);
@@ -75,6 +92,7 @@ export function MeetingNotes({
 
   const show = useCallback(
     async (id: string) => {
+      leave(id);
       setProblem(null);
       try {
         const got = await host.tool<{ meeting: Meeting; mine: string; notes: string; lines: Line[] }>('meeting', { id });
@@ -107,7 +125,9 @@ export function MeetingNotes({
   useEffect(() => {
     const path = first.path;
     const target = path?.startsWith('/meeting/') ? path.slice('/meeting/'.length) : first.live?.meeting;
-    if (target) void show(target);
+    if (!target) return;
+    places.here = target;
+    void show(target);
   }, [first, show]);
 
   useEffect(() => {
@@ -194,6 +214,7 @@ export function MeetingNotes({
       const link = (changed as { 'openai/deepLink'?: { url: string } })['openai/deepLink']?.url;
       if (link?.startsWith('/meeting/')) void show(link.slice('/meeting/'.length));
       else if (link === '/call') {
+        if (places.here === openId.current) leave('meetings');
         openId.current = null;
         setOpen(null);
         setListShown(false);
@@ -249,6 +270,7 @@ export function MeetingNotes({
    *  so its Ask panel does not start a new conversation for it. */
   const remove = async (meeting: Meeting) => {
     setDeleting(null);
+    if (places.here === meeting.id) leave('meetings');
     if (openId.current === meeting.id) {
       openId.current = null;
       setOpen(null);
@@ -266,13 +288,40 @@ export function MeetingNotes({
   };
 
   /** The start page: every meeting's actions, and Ask about all of them. */
-  const home = () => {
+  const home = useCallback(() => {
+    leave('meetings');
     openId.current = null;
     setOpen(null);
     setProblem(null);
     setSection('meetings');
     setListShown(false);
-  };
+  }, []);
+
+  const library = useCallback((key: LibrarySection) => {
+    leave(key);
+    setSection(key);
+    setListShown(false);
+  }, []);
+
+  useEffect(
+    () =>
+      host.on<{ direction: 'back' | 'forward' }>('hearthscale/ui/history', ({ direction }) => {
+        const other = direction === 'back' ? 'forward' : 'back';
+        while (places[direction].length) {
+          const to = places[direction].pop()!;
+          const exists = to === 'meetings' || isLibrary(to) || list.some((m) => m.id === to);
+          if (!exists || to === places.here) continue;
+          places[other].push(places.here);
+          places.here = to;
+          if (to === 'meetings') home();
+          else if (isLibrary(to)) library(to);
+          else void show(to);
+          return;
+        }
+      }),
+    [host, list, show, home, library],
+  );
+
   const atStart = section === 'meetings' && open === null;
   /** Ask about all meetings: at the start page's top, or in the bar of a
    *  narrow tile. */
@@ -373,15 +422,8 @@ export function MeetingNotes({
                     role="button"
                     tabIndex={0}
                     className={`hs-tipwrap hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${section === key ? ' hs-boxsel' : ''}`}
-                    onClick={() => {
-                      setSection(key);
-                      setListShown(false);
-                    }}
-                    onKeyDown={(e) => {
-                      if (!pressed(e)) return;
-                      setSection(key);
-                      setListShown(false);
-                    }}
+                    onClick={() => library(key)}
+                    onKeyDown={(e) => pressed(e) && library(key)}
                     {...tip.hover}
                   >
                     <span className="hs-session-mark">
