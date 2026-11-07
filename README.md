@@ -19,7 +19,7 @@ When another program starts to use your microphone, such as a call, Meeting note
 
 ## The models it needs
 
-Meeting notes runs on models on your device:
+These models are used, all on your device:
 
 - **A transcription model**, to hear what people say. Required.
 - **A chat model**, to write the notes and answer in Ask. Required. Notes from a model under about 4B parameters often repeat the transcript.
