@@ -2,8 +2,8 @@
   "$schema": "https://hearthscale.com/app.schema.json",
   "id": "meeting-notes",
   "name": "Meeting notes",
-  "version": "2.0.2",
-  "api": 6,
+  "version": "2.0.3",
+  "api": 7,
   "icon": {
     "light": "assets/icon-light.svg",
     "dark": "assets/icon-dark.svg"
@@ -27,8 +27,22 @@
     "cards": [
       {
         "title": "Notes of every meeting.",
-        "text": "Meeting notes hears your meetings on this computer and writes clear notes when each one ends.",
+        "text": "Clear notes are written on this device when each meeting ends.",
         "image": "assets/intro-notes.svg"
+      },
+      {
+        "title": "Download a transcription model.",
+        "text": "This model is recommended for your device. You can choose another in Settings.",
+        "download": {
+          "best": "transcription"
+        }
+      },
+      {
+        "title": "Download a chat model.",
+        "text": "This model is recommended for your device. You can choose another in Settings.",
+        "download": {
+          "best": "chat"
+        }
       },
       {
         "title": "What’s inside.",
@@ -855,7 +869,7 @@
     {
       "name": "microphones",
       "title": "List microphones",
-      "description": "The microphones of the computer and the one the person chose.",
+      "description": "The microphones of the device and the one the person chose.",
       "input": {
         "type": "object",
         "properties": {},

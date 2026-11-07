@@ -283,7 +283,7 @@ export function MeetingPage({
                   {levels.them !== null && (
                     <span className="notes-level">
                       <Icon name="volume-up-line" size={14} />
-                      <Meter value={levels.them} label="The computer's sound" />
+                      <Meter value={levels.them} label="The device's sound" />
                     </span>
                   )}
                 </div>

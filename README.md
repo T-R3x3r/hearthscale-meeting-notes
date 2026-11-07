@@ -1,6 +1,6 @@
 # Meeting notes
 
-Notes of every meeting, on your own computer. Meeting notes hears both sides of a call, shows every word as people speak, and writes clear notes when the meeting ends. No bot joins the call, and nothing leaves your computer unless you choose a cloud model.
+Notes of every meeting, on your own device. Both sides of a call are heard, every word shows as people speak, and clear notes are written when the meeting ends. No bot joins the call, and nothing leaves your device unless you choose a cloud model.
 
 Meeting notes is free and needs no account.
 
@@ -19,18 +19,18 @@ When another program starts to use your microphone, such as a call, Meeting note
 
 ## The models it needs
 
-Meeting notes runs on models on your computer:
+Meeting notes runs on models on your device:
 
 - **A transcription model**, to hear what people say. Required.
-- **A chat model**, to write the notes and answer in Ask. Required. A model of about 4B parameters, such as Qwen3 4B, writes good notes; smaller models often repeat the transcript.
+- **A chat model**, to write the notes and answer in Ask. Required. Notes from a model under about 4B parameters often repeat the transcript.
 - **A diarization model**, to tell the speakers apart. Optional.
 - **An embedding model**, so that Ask finds what you ask about in all your meetings. Optional.
 
-Download them in Hearthscale Server, then choose them in **Settings > Apps > Meeting notes**. If a required model is missing, Meeting notes says so and names that place.
+The introduction offers the transcription and chat models recommended for your device. To use others, download them in Hearthscale Server, then choose them in **Settings > Apps > Meeting notes**. If a required model is missing, a notice names that place.
 
 ## What Meeting notes asks for
 
-- **Your microphone and the sound your computer plays**, only while it records.
+- **Your microphone and the sound your device plays**, only while it records.
 - **Your models**, to transcribe, to find the speakers and to write the notes.
 - **To keep running in the background**, so a recording goes on while you use other programs, and the notes are written when it ends.
-- **Its own data.** Each meeting is a folder of Markdown files in the app's data folder on this computer. The sound is not kept.
+- **Its own data.** Each meeting is a folder of Markdown files in the app's data folder on this device. The sound is not kept.
