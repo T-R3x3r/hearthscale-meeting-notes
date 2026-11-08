@@ -33,9 +33,14 @@ export function ModelNeeds({ host }: { host: Host }) {
 
   useEffect(() => {
     void load().catch((e) => setProblem(words(e)));
-    return host.on('hearthscale/models/download', ({ download }) => {
-      if (download.state !== 'downloading') void load().catch((e) => setProblem(words(e)));
-    });
+    const reload = () => void load().catch((e) => setProblem(words(e)));
+    const offs = [
+      host.on('hearthscale/models/download', ({ download }) => {
+        if (download.state !== 'downloading') reload();
+      }),
+      host.on('hearthscale/models/chosen', reload),
+    ];
+    return () => offs.forEach((off) => off());
   }, [host, load]);
 
   return (
